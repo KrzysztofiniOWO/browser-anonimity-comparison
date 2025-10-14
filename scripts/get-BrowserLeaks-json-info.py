@@ -5,80 +5,25 @@ from bs4 import BeautifulSoup
 from collections import OrderedDict
 import helpers
 
-URL = "https://browserleaks.com/ip"
+URL = "https://browserleaks.com/javascript"
 
 def normalizeLabel(label):
-    mapping = {
-        "IP Address": "ip",
-        "Hostname": "hostname",
-        "Country": "country",
-        "State/Region": "state_region",
-        "City": "city",
-        "ISP": "isp",
-        "Organization": "organization",
-        "Network": "network",
-        "Usage Type": "usage_type",
-        "Timezone": "timezone",
-        "Local Time": "local_time",
-        "Coordinates": "coordinates",
-        "IPv6 Address": "ipv6",
-        "Local IP Address": "webrtc_local_ip",
-        "Public IP Address": "webrtc_public_ip",
-        "Request": "request",
-        "User-Agent": "user-agent",
-        "Accept": "accept",
-        "Accept-Language": "accept-language",
-        "Accept-Encoding": "accept-encoding",
-        "Referer": "referer",
-        "Upgrade-Insecure-Requests": "upgrade-insecure-requests",
-        "Sec-Fetch-Dest": "sec-fetch-dest",
-        "Sec-Fetch-Mode": "sec-fetch-mode",
-        "Sec-Fetch-Site": "sec-fetch-site",
-        "Sec-Fetch-User": "sec-fetch-user",
-        "Priority": "priority",
-        "TE": "te",
-        "Host": "host",
-        "Relays": "relays",
-    }
-    return mapping.get(label.strip(), label.strip().lower().replace(" ", "_"))
+    return label.strip().lower().replace(" ", "_").replace("/", "_").replace("-", "_")
 
-def parseBrowserleaksIPHtml(html):
+def parseBrowserleaksJavascriptHtml(html):
     soup = BeautifulSoup(html, "html.parser")
-    out = {}
+    out = OrderedDict()
 
     for tr in soup.find_all("tr"):
         tds = tr.find_all("td")
         if len(tds) >= 2:
             label = tds[0].get_text(separator=" ", strip=True)
             value = tds[1].get_text(separator=" ", strip=True)
-            key = normalizeLabel(label)
-            if value.lower() in ("n/a", "none", ""):
+            if value.lower() in ("undefined", "none", ""):
                 value = None
-            out[key] = value
-
-    if "country" in out and out["country"]:
-        import re
-        m = re.match(r"^(.*)\s+\((\w{2})\)\s*$", out["country"])
-        if m:
-            out["country_name"] = m.group(1).strip()
-            out["country_code"] = m.group(2).strip()
-
-    if "coordinates" in out and out["coordinates"]:
-        coords = out["coordinates"].replace(" ", "")
-        try:
-            lat, lon = coords.split(",", 1)
-            out["latitude"] = float(lat)
-            out["longitude"] = float(lon)
-        except Exception:
-            out["latitude"] = None
-            out["longitude"] = None
+            out[normalizeLabel(label)] = value
 
     return out
-
-def extractIP(text):
-    import re
-    m = re.search(r'(\d{1,3}(?:\.\d{1,3}){3})', text)
-    return m.group(1) if m else None
 
 def getHtmlFirefox(headless=True, wait=3):
     from selenium import webdriver
@@ -125,14 +70,16 @@ def getHtmlTorBrowser(tbb_dir, wait=5):
 
     return html, ua
 
-def filterOnlyImportantIP(data: dict) -> OrderedDict:
+def filterOnlyImportantJS(data: OrderedDict) -> OrderedDict:
     ordered_keys = [
-        "ip", "hostname", "country", "state_region", "city",
-        "isp", "organization", "network", "usage_type",
-        "timezone", "local_time", "coordinates", "ipv6",
-        "request", "user-agent", "accept", "accept-language", "accept-encoding",
-        "referer", "upgrade-insecure-requests", "sec-fetch-dest", "sec-fetch-mode",
-        "sec-fetch-site", "sec-fetch-user", "priority", "te", "host", "relays",
+        "javascript_enabled", "inline_scripts", "same_origin_scripts", "third_party_scripts",
+        "document_referrer", "document_character_set", "document_title", "screen_resolution",
+        "available_resolution", "color_depth", "pixel_depth",
+        "system_time", "tolocalestring", "datetimeformat", "locale", "timezone",
+        "useragent", "appversion", "appname", "appcodename",
+        "product", "productsub", "vendor", "buildid", "platform", "oscpu",
+        "hardwareconcurrency", "devicememory", "language", "languages",
+        "donottrack", "cookieenabled", "webdriver", "pdfviewerenabled", "globalprivacycontrol"
     ]
     return OrderedDict((k, data[k]) for k in ordered_keys if k in data)
 
@@ -150,24 +97,21 @@ def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
         else:
             html, ua = getter_fn(headless=helpers.HEADLESS_FIREFOX, wait=wait)
 
-        parsed = parseBrowserleaksIPHtml(html)
-        if not parsed.get("ip"):
-            parsed["ip"] = extractIP(html)
-
+        parsed = parseBrowserleaksJavascriptHtml(html)
         meta["user_agent"] = ua
-        result["data"] = filterOnlyImportantIP(parsed)
-        helpers.saveAsJson(browser_name, ts_safe, result, "ip")
-        print(f"[OK] Saved IP data for {browser_name}")
+        result["data"] = filterOnlyImportantJS(parsed)
+        helpers.saveAsJson(browser_name, ts_safe, result, "javascript")
+        print(f"[OK] Saved JavaScript data for {browser_name}")
         return result
 
     except Exception as e:
         meta["error"] = str(e)
-        helpers.saveAsJson(browser_name, ts_safe, result, "ip")
+        helpers.saveAsJson(browser_name, ts_safe, result, "javascript")
         print(f"[ERROR] during test {browser_name}: {e}", file=sys.stderr)
         return result
 
 def main():
-    print("[RUN] Running BrowserLeaks IP tests")
+    print("[RUN] Running BrowserLeaks JavaScript tests")
 
     print("[RUN] Firefox test")
     runSelectedBrowser("Firefox", getHtmlFirefox, wait=3)
@@ -180,7 +124,7 @@ def main():
     print("[RUN] Tor Browser test")
     runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=5, tbb_dir=tbb_dir)
 
-    print("[FIN] Finished BrowserLeaks IP tests")
+    print("[FIN] Finished BrowserLeaks JavaScript tests")
 
 if __name__ == "__main__":
     main()
