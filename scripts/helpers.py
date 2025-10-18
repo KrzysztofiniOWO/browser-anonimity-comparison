@@ -36,3 +36,16 @@ def determineTorBrowserDir():
         if os.path.isdir(cand):
             return cand
     return None
+
+def normalizeLabel(label: str, mapping: dict = None) -> str:
+    label = label.strip()
+
+    if mapping and label in mapping:
+        return mapping[label]
+
+    return (
+        label.lower()
+        .replace(" ", "_")
+        .replace("/", "_")
+        .replace("-", "_")
+    )

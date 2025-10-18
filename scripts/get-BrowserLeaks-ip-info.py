@@ -1,46 +1,46 @@
 import os
 import sys
 import time
+import re
 from bs4 import BeautifulSoup
 from collections import OrderedDict
+
 import helpers
 
 URL = "https://browserleaks.com/ip"
 
-def normalizeLabel(label):
-    mapping = {
-        "IP Address": "ip",
-        "Hostname": "hostname",
-        "Country": "country",
-        "State/Region": "state_region",
-        "City": "city",
-        "ISP": "isp",
-        "Organization": "organization",
-        "Network": "network",
-        "Usage Type": "usage_type",
-        "Timezone": "timezone",
-        "Local Time": "local_time",
-        "Coordinates": "coordinates",
-        "IPv6 Address": "ipv6",
-        "Local IP Address": "webrtc_local_ip",
-        "Public IP Address": "webrtc_public_ip",
-        "Request": "request",
-        "User-Agent": "user-agent",
-        "Accept": "accept",
-        "Accept-Language": "accept-language",
-        "Accept-Encoding": "accept-encoding",
-        "Referer": "referer",
-        "Upgrade-Insecure-Requests": "upgrade-insecure-requests",
-        "Sec-Fetch-Dest": "sec-fetch-dest",
-        "Sec-Fetch-Mode": "sec-fetch-mode",
-        "Sec-Fetch-Site": "sec-fetch-site",
-        "Sec-Fetch-User": "sec-fetch-user",
-        "Priority": "priority",
-        "TE": "te",
-        "Host": "host",
-        "Relays": "relays",
-    }
-    return mapping.get(label.strip(), label.strip().lower().replace(" ", "_"))
+IP_MAPPING = {
+    "IP Address": "ip",
+    "Hostname": "hostname",
+    "Country": "country",
+    "State/Region": "state_region",
+    "City": "city",
+    "ISP": "isp",
+    "Organization": "organization",
+    "Network": "network",
+    "Usage Type": "usage_type",
+    "Timezone": "timezone",
+    "Local Time": "local_time",
+    "Coordinates": "coordinates",
+    "IPv6 Address": "ipv6",
+    "Local IP Address": "webrtc_local_ip",
+    "Public IP Address": "webrtc_public_ip",
+    "Request": "request",
+    "User-Agent": "user-agent",
+    "Accept": "accept",
+    "Accept-Language": "accept-language",
+    "Accept-Encoding": "accept-encoding",
+    "Referer": "referer",
+    "Upgrade-Insecure-Requests": "upgrade-insecure-requests",
+    "Sec-Fetch-Dest": "sec-fetch-dest",
+    "Sec-Fetch-Mode": "sec-fetch-mode",
+    "Sec-Fetch-Site": "sec-fetch-site",
+    "Sec-Fetch-User": "sec-fetch-user",
+    "Priority": "priority",
+    "TE": "te",
+    "Host": "host",
+    "Relays": "relays",
+}
 
 def parseBrowserleaksIPHtml(html):
     soup = BeautifulSoup(html, "html.parser")
@@ -51,13 +51,12 @@ def parseBrowserleaksIPHtml(html):
         if len(tds) >= 2:
             label = tds[0].get_text(separator=" ", strip=True)
             value = tds[1].get_text(separator=" ", strip=True)
-            key = normalizeLabel(label)
+            key = helpers.normalizeLabel(label, IP_MAPPING)
             if value.lower() in ("n/a", "none", ""):
                 value = None
             out[key] = value
 
     if "country" in out and out["country"]:
-        import re
         m = re.match(r"^(.*)\s+\((\w{2})\)\s*$", out["country"])
         if m:
             out["country_name"] = m.group(1).strip()
@@ -76,7 +75,6 @@ def parseBrowserleaksIPHtml(html):
     return out
 
 def extractIP(text):
-    import re
     m = re.search(r'(\d{1,3}(?:\.\d{1,3}){3})', text)
     return m.group(1) if m else None
 
@@ -139,7 +137,7 @@ def filterOnlyImportantIP(data: dict) -> OrderedDict:
 def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
     ts_iso = helpers.getDatetimeNow()
     ts_safe = helpers.replaceDatetimeSeparators(ts_iso)
-    meta = {"browser": browser_name, "timestamp": ts_iso, "script_version": "1.2"}
+    meta = {"browser": browser_name, "timestamp": ts_iso, "script_version": "1.3"}
     result = {"meta": meta, "data": None}
 
     try:

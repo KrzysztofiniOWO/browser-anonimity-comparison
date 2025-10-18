@@ -7,9 +7,6 @@ import helpers
 
 URL = "https://browserleaks.com/javascript"
 
-def normalizeLabel(label):
-    return label.strip().lower().replace(" ", "_").replace("/", "_").replace("-", "_")
-
 def parseBrowserleaksJavascriptHtml(html):
     soup = BeautifulSoup(html, "html.parser")
     out = OrderedDict()
@@ -19,9 +16,10 @@ def parseBrowserleaksJavascriptHtml(html):
         if len(tds) >= 2:
             label = tds[0].get_text(separator=" ", strip=True)
             value = tds[1].get_text(separator=" ", strip=True)
+            key = helpers.normalizeLabel(label)
             if value.lower() in ("undefined", "none", ""):
                 value = None
-            out[normalizeLabel(label)] = value
+            out[key] = value
 
     return out
 
@@ -86,7 +84,7 @@ def filterOnlyImportantJS(data: OrderedDict) -> OrderedDict:
 def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
     ts_iso = helpers.getDatetimeNow()
     ts_safe = helpers.replaceDatetimeSeparators(ts_iso)
-    meta = {"browser": browser_name, "timestamp": ts_iso, "script_version": "1.2"}
+    meta = {"browser": browser_name, "timestamp": ts_iso, "script_version": "1.3"}
     result = {"meta": meta, "data": None}
 
     try:
