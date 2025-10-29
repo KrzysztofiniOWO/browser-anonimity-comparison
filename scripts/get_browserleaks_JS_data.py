@@ -3,7 +3,8 @@ import sys
 import time
 from bs4 import BeautifulSoup
 from collections import OrderedDict
-import helpers
+
+from . import helpers
 
 URL = "https://browserleaks.com/javascript"
 
@@ -52,7 +53,6 @@ def getHtmlTorBrowser(tbb_dir, wait=5):
             from pyvirtualdisplay import Display
             display = Display()
             display.start()
-            print("[DEBUG] pyvirtualdisplay started for Tor Browser")
         except Exception as e:
             print(f"[WARN] Could not start pyvirtualdisplay: {e}. Trying without headless.")
 
@@ -105,11 +105,10 @@ def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
     except Exception as e:
         meta["error"] = str(e)
         helpers.saveAsJson(browser_name, ts_safe, result, "javascript")
-        print(f"[ERROR] during test {browser_name}: {e}", file=sys.stderr)
         return result
 
 def main():
-    print("[RUN] Running BrowserLeaks JavaScript tests")
+    print("[MODULE] Running browserleaks JS tests")
 
     print("[RUN] Firefox test")
     runSelectedBrowser("Firefox", getHtmlFirefox, wait=3)
@@ -122,7 +121,7 @@ def main():
     print("[RUN] Tor Browser test")
     runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=5, tbb_dir=tbb_dir)
 
-    print("[FIN] Finished BrowserLeaks JavaScript tests")
+    print("[FIN] Finished browserleaks JS tests")
 
 if __name__ == "__main__":
     main()

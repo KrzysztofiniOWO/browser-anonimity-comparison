@@ -4,7 +4,7 @@ import time
 import json
 import re
 from collections import OrderedDict
-import helpers
+from . import helpers
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium import webdriver
@@ -55,7 +55,6 @@ def getHtmlFirefox(headless=True, wait=30):
         opts.add_argument("--headless")
     driver = webdriver.Firefox(options=opts)
     driver.get(URL)
-    print(f"[DEBUG] Waiting {wait}s for full JS rendering...")
     time.sleep(wait)
     return driver
 
@@ -67,10 +66,8 @@ def getHtmlTorBrowser(tbb_dir, wait=30):
     if helpers.HEADLESS_TBB:
         display = Display()
         display.start()
-        print("[DEBUG] pyvirtualdisplay started for Tor Browser")
     driver = TorBrowserDriver(tbb_dir, headless=False)
     driver.get(URL)
-    print(f"[DEBUG] Waiting {wait}s for full page rendering (Tor Browser)...")
     time.sleep(wait)
     return driver, display
 
@@ -149,13 +146,12 @@ def runSelectedBrowser(browser_name, getter_fn, wait=30, tbb_dir=None):
 
         parsed = parseAmiUniqueHtml(driver)
         result["data"] = parsed
-        helpers.saveAsJson(browser_name, ts_safe, result, "amiunique_summary")
-        print(f"[OK] Saved AmiUnique data for {browser_name}")
+        helpers.saveAsJson(browser_name, ts_safe, result, "amiunique")
+        print(f"[SAVE] Saved AmiUnique data for {browser_name}")
 
     except Exception as e:
         meta["error"] = str(e)
-        helpers.saveAsJson(browser_name, ts_safe, result, "amiunique_summary")
-        print(f"[ERROR] during test {browser_name}: {e}", file=sys.stderr)
+        helpers.saveAsJson(browser_name, ts_safe, result, "amiunique")
 
     finally:
         try:
@@ -168,7 +164,7 @@ def runSelectedBrowser(browser_name, getter_fn, wait=30, tbb_dir=None):
     return result
 
 def main():
-    print("[RUN] Running AmiUnique fingerprint tests")
+    print("[MODULE] Running amiunique tests")
 
     print("[RUN] Firefox test")
     runSelectedBrowser("Firefox", getHtmlFirefox, wait=30)
