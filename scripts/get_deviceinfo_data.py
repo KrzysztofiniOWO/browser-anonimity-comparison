@@ -1,3 +1,6 @@
+from . import helpers
+from .helpers import logger as log
+
 import os
 import sys
 import time
@@ -9,8 +12,6 @@ try:
     from tbselenium.tbdriver import TorBrowserDriver
 except ImportError:
     TorBrowserDriver = None
-
-from . import helpers
 
 URL = "https://www.deviceinfo.me/"
 
@@ -67,6 +68,7 @@ FIELDS_ORDER = [
 ]
 
 def parseDeviceInfoHtml(html):
+    log.info("Parsing deviceinfo.me HTML content")
     soup = BeautifulSoup(html, "html.parser")
     data = OrderedDict()
 
@@ -84,6 +86,7 @@ def parseDeviceInfoHtml(html):
     return ordered_data
 
 def getHtmlFirefox(headless=True, wait=10):
+    log.info("Launching Firefox for deviceinfo.me")
     opts = Options()
     opts.binary_location = helpers.FIREFOX_BINARY
     if headless:
@@ -91,34 +94,46 @@ def getHtmlFirefox(headless=True, wait=10):
 
     driver = webdriver.Firefox(options=opts)
     try:
+        log.info("Opening deviceinfo.me in Firefox")
         driver.get(URL)
         time.sleep(wait)
         html = driver.page_source
+        log.info("Page loaded successfully (Firefox)")
     finally:
         driver.quit()
+        log.info("Closed Firefox instance")
+
     return html
 
 def getHtmlTorBrowser(tbb_dir, wait=10):
+    log.info("Launching Tor Browser for deviceinfo.me")
     if TorBrowserDriver is None:
         raise RuntimeError("tbselenium is required for Tor Browser")
+
     from pyvirtualdisplay import Display
     display = None
     if helpers.HEADLESS_TBB:
         display = Display()
         display.start()
+        log.info("Started virtual display for Tor Browser")
 
     driver = TorBrowserDriver(tbb_dir, headless=False)
     try:
+        log.info("Opening deviceinfo.me in Tor Browser")
         driver.get(URL)
         time.sleep(wait)
         html = driver.page_source
+        log.info("Page loaded successfully (Tor Browser)")
     finally:
         driver.quit()
         if display:
             display.stop()
+            log.info("Stopped virtual display")
+
     return html
 
 def runSelectedBrowser(browser_name, getter_fn, wait=10, tbb_dir=None):
+    log.info(f"Running deviceinfo.me test for {browser_name}")
     ts_iso = helpers.getDatetimeNow()
     ts_safe = helpers.replaceDatetimeSeparators(ts_iso)
     meta = {"browser": browser_name, "timestamp": ts_iso, "script_version": "1.0"}
@@ -135,28 +150,29 @@ def runSelectedBrowser(browser_name, getter_fn, wait=10, tbb_dir=None):
         parsed = parseDeviceInfoHtml(html)
         result["data"] = parsed
         helpers.saveAsJson(browser_name, ts_safe, result, "deviceinfo")
-        print(f"[SAVE] Saved DeviceInfo data for {browser_name}")
+        log.save(f"Saved DeviceInfo data for {browser_name}")
 
     except Exception as e:
         meta["error"] = str(e)
+        log.error(f"Error while running deviceinfo.me test for {browser_name}: {e}")
         helpers.saveAsJson(browser_name, ts_safe, result, "deviceinfo")
 
     return result
 
 def main():
-    print("[MODULE] Running deviceinfo.me tests")
+    log.module("Starting deviceinfo.me module")
 
-    print("[RUN] Firefox test")
+    log.info("Running Firefox test")
     runSelectedBrowser("Firefox", getHtmlFirefox, wait=10)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:
-        print("[WARN] Tor Browser folder not found", file=sys.stderr)
+        log.warning("Tor Browser folder not found", file=sys.stderr)
     else:
-        print("[RUN] Tor Browser test")
+        log.info("Running Tor Browser test")
         runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=10, tbb_dir=tbb_dir)
 
-    print("[FIN] Finished deviceinfo.me tests")
+    log.finish("Finished deviceinfo.me module")
 
 if __name__ == "__main__":
     main()

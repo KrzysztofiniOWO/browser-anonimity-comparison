@@ -1,14 +1,16 @@
+from . import helpers
+from .helpers import logger as log
+
 import os
 import sys
 import time
 from bs4 import BeautifulSoup
 from collections import OrderedDict
 
-from . import helpers
-
 URL = "https://browserleaks.com/javascript"
 
 def parseBrowserleaksJavascriptHtml(html):
+    log.info("Parsing BrowserLeaks JavaScript data")
     soup = BeautifulSoup(html, "html.parser")
     out = OrderedDict()
 
@@ -25,6 +27,7 @@ def parseBrowserleaksJavascriptHtml(html):
     return out
 
 def getHtmlFirefox(headless=True, wait=3):
+    log.info("Launching Firefox for JS test")
     from selenium import webdriver
     from selenium.webdriver.firefox.options import Options
 
@@ -36,15 +39,18 @@ def getHtmlFirefox(headless=True, wait=3):
     driver = webdriver.Firefox(options=opts)
     try:
         driver.get(URL)
+        log.info("Loaded BrowserLeaks JS page in Firefox")
         time.sleep(wait)
         ua = driver.execute_script("return navigator.userAgent;")
         html = driver.page_source
     finally:
         driver.quit()
+        log.info("Closed Firefox browser")
 
     return html, ua
 
 def getHtmlTorBrowser(tbb_dir, wait=5):
+    log.info("Launching Tor Browser for JS test")
     from tbselenium.tbdriver import TorBrowserDriver
 
     display = None
@@ -54,17 +60,19 @@ def getHtmlTorBrowser(tbb_dir, wait=5):
             display = Display()
             display.start()
         except Exception as e:
-            print(f"[WARN] Could not start pyvirtualdisplay: {e}. Trying without headless.")
+            log.warning(f"Could not start pyvirtualdisplay: {e}. Trying without headless.")
 
     try:
         with TorBrowserDriver(tbb_dir) as driver:
             driver.get(URL)
+            log.info("Loaded BrowserLeaks JS page in Tor Browser")
             ua = driver.execute_script("return navigator.userAgent;")
             time.sleep(wait)
             html = driver.page_source
     finally:
         if display:
             display.stop()
+            log.info("Stopped virtual display for Tor")
 
     return html, ua
 
@@ -82,6 +90,7 @@ def filterOnlyImportantJS(data: OrderedDict) -> OrderedDict:
     return OrderedDict((k, data[k]) for k in ordered_keys if k in data)
 
 def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
+    log.info(f"Running BrowserLeaks JS test for {browser_name}")
     ts_iso = helpers.getDatetimeNow()
     ts_safe = helpers.replaceDatetimeSeparators(ts_iso)
     meta = {"browser": browser_name, "timestamp": ts_iso, "script_version": "1.3"}
@@ -98,30 +107,33 @@ def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
         parsed = parseBrowserleaksJavascriptHtml(html)
         meta["user_agent"] = ua
         result["data"] = filterOnlyImportantJS(parsed)
-        helpers.saveAsJson(browser_name, ts_safe, result, "javascript")
-        print(f"[OK] Saved JavaScript data for {browser_name}")
+
+        helpers.saveAsJson(browser_name, ts_safe, result, "browserleaks_javascript")
+        log.save(f"Saved JavaScript results for {browser_name}")
         return result
 
     except Exception as e:
         meta["error"] = str(e)
-        helpers.saveAsJson(browser_name, ts_safe, result, "javascript")
+        log.error(f"Error during {browser_name} JS test: {e}")
+        helpers.saveAsJson(browser_name, ts_safe, result, "browserleaks_javascript")
         return result
 
 def main():
-    print("[MODULE] Running browserleaks JS tests")
+    log.module("Starting BrowserLeaks JavaScript module")
 
-    print("[RUN] Firefox test")
+    log.info("Firefox JS test started")
     runSelectedBrowser("Firefox", getHtmlFirefox, wait=3)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:
-        print("[WARN] Tor Browser folder not found", file=sys.stderr)
+        log.warning("Tor Browser folder not found", file=sys.stderr)
+        log.finish("Module finished with missing Tor path")
         return
 
-    print("[RUN] Tor Browser test")
+    log.info("Tor Browser JS test started")
     runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=5, tbb_dir=tbb_dir)
 
-    print("[FIN] Finished browserleaks JS tests")
+    log.finish("BrowserLeaks JavaScript module completed")
 
 if __name__ == "__main__":
     main()

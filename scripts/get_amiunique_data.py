@@ -1,10 +1,12 @@
+from . import helpers
+from .helpers import logger as log
+
 import os
 import sys
 import time
 import json
 import re
 from collections import OrderedDict
-from . import helpers
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium import webdriver
@@ -43,12 +45,12 @@ def extract_cell_value(cell):
     except:
         return "Unknown"
 
-
 def clean_multiline(value):
     lines = [line.strip() for line in value.split("\n") if line.strip()]
     return "\n".join(list(dict.fromkeys(lines)))
 
 def getHtmlFirefox(headless=True, wait=30):
+    log.info("Launching Firefox browser session")
     opts = Options()
     opts.binary_location = helpers.FIREFOX_BINARY
     if headless:
@@ -56,9 +58,11 @@ def getHtmlFirefox(headless=True, wait=30):
     driver = webdriver.Firefox(options=opts)
     driver.get(URL)
     time.sleep(wait)
+    log.info("Firefox page loaded successfully")
     return driver
 
 def getHtmlTorBrowser(tbb_dir, wait=30):
+    log.info("Launching Tor Browser session")
     if TorBrowserDriver is None:
         raise RuntimeError("tbselenium is required for Tor Browser")
     from pyvirtualdisplay import Display
@@ -69,9 +73,11 @@ def getHtmlTorBrowser(tbb_dir, wait=30):
     driver = TorBrowserDriver(tbb_dir, headless=False)
     driver.get(URL)
     time.sleep(wait)
+    log.info("Tor Browser page loaded successfully")
     return driver, display
 
 def get_dynamic_values(driver):
+    log.info("Collecting dynamic JavaScript-based values")
     out = {}
     try:
         out['cookies_enabled'] = driver.execute_script("return navigator.cookieEnabled ? 'Yes' : 'No';")
@@ -114,6 +120,7 @@ def get_dynamic_values(driver):
     return out
 
 def parseAmiUniqueHtml(driver):
+    log.info("Parsing AmiUnique HTML content")
     data = {}
     rows = driver.find_elements(By.CSS_SELECTOR, "tr")
     for row in rows:
@@ -130,6 +137,7 @@ def parseAmiUniqueHtml(driver):
     return data
 
 def runSelectedBrowser(browser_name, getter_fn, wait=30, tbb_dir=None):
+    log.info(f"Running AmiUnique test for {browser_name}")
     ts_iso = helpers.getDatetimeNow()
     ts_safe = helpers.replaceDatetimeSeparators(ts_iso)
     meta = {"browser": browser_name, "timestamp": ts_iso, "script_version": "1.0"}
@@ -147,36 +155,39 @@ def runSelectedBrowser(browser_name, getter_fn, wait=30, tbb_dir=None):
         parsed = parseAmiUniqueHtml(driver)
         result["data"] = parsed
         helpers.saveAsJson(browser_name, ts_safe, result, "amiunique")
-        print(f"[SAVE] Saved AmiUnique data for {browser_name}")
+        log.save(f"Saved AmiUnique data for {browser_name}")
 
     except Exception as e:
         meta["error"] = str(e)
+        log.error(f"Error during {browser_name} test: {e}")
         helpers.saveAsJson(browser_name, ts_safe, result, "amiunique")
 
     finally:
         try:
             driver.quit()
+            log.info(f"Closed {browser_name} session")
         except:
             pass
         if display:
             display.stop()
+            log.info("Stopped virtual display for Tor Browser")
 
     return result
 
 def main():
-    print("[MODULE] Running amiunique tests")
+    log.module("Starting AmiUnique module")
 
-    print("[RUN] Firefox test")
+    log.info("Firefox test started")
     runSelectedBrowser("Firefox", getHtmlFirefox, wait=30)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:
-        print("[WARN] Tor Browser folder not found", file=sys.stderr)
+        log.warning("Tor Browser folder not found")
     else:
-        print("[RUN] Tor Browser test")
+        log.info("Tor Browser test started")
         runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=30, tbb_dir=tbb_dir)
 
-    print("[FIN] Finished AmiUnique fingerprint tests")
+    log.finish("AmiUnique module completed")
 
 if __name__ == "__main__":
     main()
