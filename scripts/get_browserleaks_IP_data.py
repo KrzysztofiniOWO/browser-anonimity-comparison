@@ -1,11 +1,12 @@
+from . import helpers
+from .helpers import logger as log
+
 import os
 import sys
 import time
 import re
 from bs4 import BeautifulSoup
 from collections import OrderedDict
-
-from . import helpers
 
 URL = "https://browserleaks.com/ip"
 
@@ -43,6 +44,7 @@ IP_MAPPING = {
 }
 
 def parseBrowserleaksIPHtml(html):
+    log.info("Parsing BrowserLeaks HTML content")
     soup = BeautifulSoup(html, "html.parser")
     out = {}
 
@@ -82,6 +84,7 @@ def getHtmlFirefox(headless=True, wait=3):
     from selenium import webdriver
     from selenium.webdriver.firefox.options import Options
 
+    log.info("Launching Firefox browser session")
     opts = Options()
     opts.binary_location = helpers.FIREFOX_BINARY
     if headless:
@@ -91,14 +94,18 @@ def getHtmlFirefox(headless=True, wait=3):
     try:
         driver.get(URL)
         time.sleep(wait)
-        ua = driver.execute_script("return navigator.userAgent;")
         html = driver.page_source
+        ua = driver.execute_script("return navigator.userAgent;")
+        log.info("Firefox page loaded successfully")
     finally:
         driver.quit()
+        log.info("Closed Firefox session")
 
     return html, ua
 
 def getHtmlTorBrowser(tbb_dir, wait=5):
+    log.info("Launching Tor Browser session")
+
     from tbselenium.tbdriver import TorBrowserDriver
 
     display = None
@@ -108,17 +115,19 @@ def getHtmlTorBrowser(tbb_dir, wait=5):
             display = Display()
             display.start()
         except Exception as e:
-            print(f"[WARN] Could not start pyvirtualdisplay: {e}. Trying without headless.")
+            log.warning(f"Could not start pyvirtualdisplay: {e}. Trying without headless.")
 
     try:
         with TorBrowserDriver(tbb_dir) as driver:
             driver.get(URL)
-            ua = driver.execute_script("return navigator.userAgent;")
             time.sleep(wait)
             html = driver.page_source
+            ua = driver.execute_script("return navigator.userAgent;")
+            log.info("Tor Browser page loaded successfully")
     finally:
         if display:
             display.stop()
+            log.info("Stopped virtual display for Tor Browser")
 
     return html, ua
 
@@ -134,6 +143,8 @@ def filterOnlyImportantIP(data: dict) -> OrderedDict:
     return OrderedDict((k, data[k]) for k in ordered_keys if k in data)
 
 def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
+    log.info(f"Running BrowserLeaks IP test for {browser_name}")
+
     ts_iso = helpers.getDatetimeNow()
     ts_safe = helpers.replaceDatetimeSeparators(ts_iso)
     meta = {"browser": browser_name, "timestamp": ts_iso, "script_version": "1.3"}
@@ -152,31 +163,33 @@ def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
             parsed["ip"] = extractIP(html)
 
         meta["user_agent"] = ua
-        result["data"] = filterOnlyImportantIP(parsed)
-        helpers.saveAsJson(browser_name, ts_safe, result, "ip")
-        print(f"[OK] Saved IP data for {browser_name}")
-        return result
+        filtered = filterOnlyImportantIP(parsed)
+        result["data"] = filtered
 
+        helpers.saveAsJson(browser_name, ts_safe, result, "browserleaks_ip")
+
+        log.save(f"Saved BrowserLeaks IP data for {browser_name}")
     except Exception as e:
         meta["error"] = str(e)
-        helpers.saveAsJson(browser_name, ts_safe, result, "ip")
-        return result
+        helpers.saveAsJson(browser_name, ts_safe, result, "browserleaks_ip")
+        log.error(f"Error during {browser_name} test: {e}")
+
+    return result
 
 def main():
-    print("[MODULE] Running browserleaks IP tests")
+    log.module("Starting BrowserLeaks IP module")
 
-    print("[RUN] Firefox test")
+    log.info("Firefox test started")
     runSelectedBrowser("Firefox", getHtmlFirefox, wait=3)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:
-        print("[WARN] Tor Browser folder not found", file=sys.stderr)
-        return
+        log.warning("Tor Browser folder not found")
+    else:
+        log.info("Tor Browser test started")
+        runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=5, tbb_dir=tbb_dir)
 
-    print("[RUN] Tor Browser test")
-    runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=5, tbb_dir=tbb_dir)
-
-    print("[FIN] Finished browserleakss IP tests")
+    log.finish("BrowserLeaks IP module completed")
 
 if __name__ == "__main__":
     main()
