@@ -1,12 +1,8 @@
 from . import helpers
 from .helpers import logger as log
 
-import os
-import sys
 import time
-import json
 import re
-from collections import OrderedDict
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium import webdriver

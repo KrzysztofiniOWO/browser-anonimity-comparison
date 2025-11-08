@@ -1,7 +1,6 @@
 from . import helpers
 from .helpers import logger as log
 
-import os
 import sys
 import time
 from collections import OrderedDict

@@ -1,10 +1,7 @@
 from . import helpers
 from .helpers import logger as log
 
-import os
-import json
 import requests
-from pathlib import Path
 
 IPINFO_URL = "https://ipinfo.io/json"
 TOR_PROXY = "socks5h://127.0.0.1:9050"

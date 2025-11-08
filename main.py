@@ -4,7 +4,8 @@ from scripts import (
     get_browserleaks_JS_data,
     get_deviceinfo_data,
     get_ipinfo_data,
-    get_ipleak_data
+    get_ipleak_data,
+    get_pixelscan_data
 
 )
 
@@ -15,6 +16,7 @@ def main():
     get_deviceinfo_data.main()
     get_ipinfo_data.main()
     get_ipleak_data.main()
+    get_pixelscan_data.main()
 
 if __name__ == "__main__":
     main()
