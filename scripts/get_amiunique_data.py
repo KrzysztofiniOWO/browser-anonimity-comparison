@@ -17,12 +17,14 @@ except ImportError:
 
 URL = "https://amiunique.org/fingerprint"
 
+
 def normalize_key(label):
     key = label.split(" - ", 1)[-1].strip().lower()
     key = re.sub(r'[()\s]+', '_', key)
     key = re.sub(r'_+', '_', key)
     key = key.strip('_')
     return key
+
 
 def extract_cell_value(cell):
     try:
@@ -45,9 +47,11 @@ def extract_cell_value(cell):
     except:
         return "Unknown"
 
+
 def clean_multiline(value):
     lines = [line.strip() for line in value.split("\n") if line.strip()]
     return "\n".join(list(dict.fromkeys(lines)))
+
 
 def getHtmlFirefox(headless=True, wait=30):
     log.info("Launching Firefox browser session")
@@ -60,6 +64,7 @@ def getHtmlFirefox(headless=True, wait=30):
     time.sleep(wait)
     log.info("Firefox page loaded successfully")
     return driver
+
 
 def getHtmlTorBrowser(tbb_dir, wait=30):
     log.info("Launching Tor Browser session")
@@ -75,6 +80,7 @@ def getHtmlTorBrowser(tbb_dir, wait=30):
     time.sleep(wait)
     log.info("Tor Browser page loaded successfully")
     return driver, display
+
 
 def get_dynamic_values(driver):
     log.info("Collecting dynamic JavaScript-based values")
@@ -119,6 +125,7 @@ def get_dynamic_values(driver):
 
     return out
 
+
 def parseAmiUniqueHtml(driver):
     log.info("Parsing AmiUnique HTML content")
     data = {}
@@ -135,6 +142,7 @@ def parseAmiUniqueHtml(driver):
             continue
     data.update(get_dynamic_values(driver))
     return data
+
 
 def runSelectedBrowser(browser_name, getter_fn, wait=30, tbb_dir=None):
     log.info(f"Running AmiUnique test for {browser_name}")
@@ -174,6 +182,7 @@ def runSelectedBrowser(browser_name, getter_fn, wait=30, tbb_dir=None):
 
     return result
 
+
 def main():
     log.module("Starting AmiUnique module")
 
@@ -188,6 +197,7 @@ def main():
         runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=30, tbb_dir=tbb_dir)
 
     log.finish("AmiUnique module completed")
+
 
 if __name__ == "__main__":
     main()

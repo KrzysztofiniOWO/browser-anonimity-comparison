@@ -9,6 +9,7 @@ from collections import OrderedDict
 
 URL = "https://browserleaks.com/javascript"
 
+
 def parseBrowserleaksJavascriptHtml(html):
     log.info("Parsing BrowserLeaks JavaScript data")
     soup = BeautifulSoup(html, "html.parser")
@@ -25,6 +26,7 @@ def parseBrowserleaksJavascriptHtml(html):
             out[key] = value
 
     return out
+
 
 def getHtmlFirefox(headless=True, wait=3):
     log.info("Launching Firefox for JS test")
@@ -48,6 +50,7 @@ def getHtmlFirefox(headless=True, wait=3):
         log.info("Closed Firefox browser")
 
     return html, ua
+
 
 def getHtmlTorBrowser(tbb_dir, wait=5):
     log.info("Launching Tor Browser for JS test")
@@ -76,6 +79,7 @@ def getHtmlTorBrowser(tbb_dir, wait=5):
 
     return html, ua
 
+
 def filterOnlyImportantJS(data: OrderedDict) -> OrderedDict:
     ordered_keys = [
         "javascript_enabled", "inline_scripts", "same_origin_scripts", "third_party_scripts",
@@ -88,6 +92,7 @@ def filterOnlyImportantJS(data: OrderedDict) -> OrderedDict:
         "donottrack", "cookieenabled", "webdriver", "pdfviewerenabled", "globalprivacycontrol"
     ]
     return OrderedDict((k, data[k]) for k in ordered_keys if k in data)
+
 
 def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
     log.info(f"Running BrowserLeaks JS test for {browser_name}")
@@ -118,6 +123,7 @@ def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
         helpers.saveAsJson(browser_name, ts_safe, result, "browserleaks_javascript")
         return result
 
+
 def main():
     log.module("Starting BrowserLeaks JavaScript module")
 
@@ -134,6 +140,7 @@ def main():
     runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=5, tbb_dir=tbb_dir)
 
     log.finish("BrowserLeaks JavaScript module completed")
+
 
 if __name__ == "__main__":
     main()

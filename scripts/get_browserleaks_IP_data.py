@@ -43,6 +43,7 @@ IP_MAPPING = {
     "Relays": "relays",
 }
 
+
 def parseBrowserleaksIPHtml(html):
     log.info("Parsing BrowserLeaks HTML content")
     soup = BeautifulSoup(html, "html.parser")
@@ -76,9 +77,11 @@ def parseBrowserleaksIPHtml(html):
 
     return out
 
+
 def extractIP(text):
     m = re.search(r'(\d{1,3}(?:\.\d{1,3}){3})', text)
     return m.group(1) if m else None
+
 
 def getHtmlFirefox(headless=True, wait=3):
     from selenium import webdriver
@@ -102,6 +105,7 @@ def getHtmlFirefox(headless=True, wait=3):
         log.info("Closed Firefox session")
 
     return html, ua
+
 
 def getHtmlTorBrowser(tbb_dir, wait=5):
     log.info("Launching Tor Browser session")
@@ -131,6 +135,7 @@ def getHtmlTorBrowser(tbb_dir, wait=5):
 
     return html, ua
 
+
 def filterOnlyImportantIP(data: dict) -> OrderedDict:
     ordered_keys = [
         "ip", "hostname", "country", "state_region", "city",
@@ -141,6 +146,7 @@ def filterOnlyImportantIP(data: dict) -> OrderedDict:
         "sec-fetch-site", "sec-fetch-user", "priority", "te", "host", "relays",
     ]
     return OrderedDict((k, data[k]) for k in ordered_keys if k in data)
+
 
 def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
     log.info(f"Running BrowserLeaks IP test for {browser_name}")
@@ -176,6 +182,7 @@ def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
 
     return result
 
+
 def main():
     log.module("Starting BrowserLeaks IP module")
 
@@ -190,6 +197,7 @@ def main():
         runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=5, tbb_dir=tbb_dir)
 
     log.finish("BrowserLeaks IP module completed")
+
 
 if __name__ == "__main__":
     main()
