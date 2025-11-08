@@ -67,6 +67,7 @@ FIELDS_ORDER = [
     "Languages"
 ]
 
+
 def parseDeviceInfoHtml(html):
     log.info("Parsing deviceinfo.me HTML content")
     soup = BeautifulSoup(html, "html.parser")
@@ -84,6 +85,7 @@ def parseDeviceInfoHtml(html):
         ordered_data[field] = data.get(field)
 
     return ordered_data
+
 
 def getHtmlFirefox(headless=True, wait=10):
     log.info("Launching Firefox for deviceinfo.me")
@@ -104,6 +106,7 @@ def getHtmlFirefox(headless=True, wait=10):
         log.info("Closed Firefox instance")
 
     return html
+
 
 def getHtmlTorBrowser(tbb_dir, wait=10):
     log.info("Launching Tor Browser for deviceinfo.me")
@@ -132,6 +135,7 @@ def getHtmlTorBrowser(tbb_dir, wait=10):
 
     return html
 
+
 def runSelectedBrowser(browser_name, getter_fn, wait=10, tbb_dir=None):
     log.info(f"Running deviceinfo.me test for {browser_name}")
     ts_iso = helpers.getDatetimeNow()
@@ -159,6 +163,7 @@ def runSelectedBrowser(browser_name, getter_fn, wait=10, tbb_dir=None):
 
     return result
 
+
 def main():
     log.module("Starting deviceinfo.me module")
 
@@ -173,6 +178,7 @@ def main():
         runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=10, tbb_dir=tbb_dir)
 
     log.finish("Finished deviceinfo.me module")
+
 
 if __name__ == "__main__":
     main()
