@@ -5,12 +5,12 @@ import sys
 import time
 from collections import OrderedDict
 from bs4 import BeautifulSoup
+from pyvirtualdisplay import Display
+
+from tbselenium.tbdriver import TorBrowserDriver
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-try:
-    from tbselenium.tbdriver import TorBrowserDriver
-except ImportError:
-    TorBrowserDriver = None
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 URL = "https://www.deviceinfo.me/"
 
@@ -88,7 +88,7 @@ def parseDeviceInfoHtml(html):
 
 def getHtmlFirefox(headless=True, wait=10):
     log.info("Launching Firefox for deviceinfo.me")
-    opts = Options()
+    opts = FirefoxOptions()
     opts.binary_location = helpers.FIREFOX_BINARY
     if headless:
         opts.add_argument("--headless")
@@ -107,12 +107,38 @@ def getHtmlFirefox(headless=True, wait=10):
     return html
 
 
+def getHtmlChrome(headless=True, wait=10):
+    log.info("Launching Chrome for deviceinfo.me")
+
+    opts = ChromeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+
+    if hasattr(helpers, "CHROME_BINARY") and helpers.CHROME_BINARY:
+        opts.binary_location = helpers.CHROME_BINARY
+
+    driver = webdriver.Chrome(options=opts)
+    try:
+        log.info("Opening deviceinfo.me in Chrome")
+        driver.get(URL)
+        time.sleep(wait)
+        html = driver.page_source
+        log.info("Page loaded successfully (Chrome)")
+    finally:
+        driver.quit()
+        log.info("Closed Chrome instance")
+
+    return html
+
+
 def getHtmlTorBrowser(tbb_dir, wait=10):
     log.info("Launching Tor Browser for deviceinfo.me")
     if TorBrowserDriver is None:
         raise RuntimeError("tbselenium is required for Tor Browser")
 
-    from pyvirtualdisplay import Display
     display = None
     if helpers.HEADLESS_TBB:
         display = Display()
@@ -168,6 +194,9 @@ def main():
 
     log.info("Running Firefox test")
     runSelectedBrowser("Firefox", getHtmlFirefox, wait=10)
+
+    log.info("Running Chrome test")
+    runSelectedBrowser("Chrome", getHtmlChrome, wait=10)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:

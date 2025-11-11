@@ -5,6 +5,12 @@ import time
 import re
 from bs4 import BeautifulSoup
 from collections import OrderedDict
+from pyvirtualdisplay import Display
+
+from tbselenium.tbdriver import TorBrowserDriver
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 URL = "https://browserleaks.com/ip"
 
@@ -82,11 +88,9 @@ def extractIP(text):
 
 
 def getHtmlFirefox(headless=True, wait=3):
-    from selenium import webdriver
-    from selenium.webdriver.firefox.options import Options
 
     log.info("Launching Firefox browser session")
-    opts = Options()
+    opts = FirefoxOptions()
     opts.binary_location = helpers.FIREFOX_BINARY
     if headless:
         opts.add_argument("--headless")
@@ -105,15 +109,39 @@ def getHtmlFirefox(headless=True, wait=3):
     return html, ua
 
 
+def getHtmlChrome(headless=True, wait=3):
+
+    log.info("Launching Chrome browser session")
+    opts = ChromeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+
+    if hasattr(helpers, "CHROME_BINARY") and helpers.CHROME_BINARY:
+        opts.binary_location = helpers.CHROME_BINARY
+
+    driver = webdriver.Chrome(options=opts)
+    try:
+        driver.get(URL)
+        time.sleep(wait)
+        html = driver.page_source
+        ua = driver.execute_script("return navigator.userAgent;")
+        log.info("Chrome page loaded successfully")
+    finally:
+        driver.quit()
+        log.info("Closed Chrome session")
+
+    return html, ua
+
+
 def getHtmlTorBrowser(tbb_dir, wait=5):
     log.info("Launching Tor Browser session")
-
-    from tbselenium.tbdriver import TorBrowserDriver
 
     display = None
     if helpers.HEADLESS_TBB:
         try:
-            from pyvirtualdisplay import Display
             display = Display()
             display.start()
         except Exception as e:
@@ -186,6 +214,9 @@ def main():
 
     log.info("Firefox test started")
     runSelectedBrowser("Firefox", getHtmlFirefox, wait=3)
+
+    log.info("Chrome test started")
+    runSelectedBrowser("Chrome", getHtmlChrome, wait=3)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:
