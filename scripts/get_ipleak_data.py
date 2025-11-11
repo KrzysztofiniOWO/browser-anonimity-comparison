@@ -3,21 +3,19 @@ from .helpers import logger as log
 
 import re
 import time
-from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
-from selenium import webdriver
-try:
-    from tbselenium.tbdriver import TorBrowserDriver
-except ImportError:
-    TorBrowserDriver = None
+from pyvirtualdisplay import Display
 
+from tbselenium.tbdriver import TorBrowserDriver
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 URL = "https://ipleak.net/"
 
 
 def getHtmlFirefox(headless=True, wait=45):
     log.info("Launching Firefox for IPLeak test")
-    opts = Options()
+    opts = FirefoxOptions()
     opts.binary_location = helpers.FIREFOX_BINARY
     if headless:
         opts.add_argument("--headless")
@@ -30,12 +28,32 @@ def getHtmlFirefox(headless=True, wait=45):
     return driver
 
 
+def getHtmlChrome(headless=True, wait=45):
+    log.info("Launching Chrome for IPLeak test")
+
+    opts = ChromeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+
+    if hasattr(helpers, "CHROME_BINARY") and helpers.CHROME_BINARY:
+        opts.binary_location = helpers.CHROME_BINARY
+
+    driver = webdriver.Chrome(options=opts)
+    driver.get(URL)
+    log.info(f"Waiting {wait}s for full JS load...")
+    time.sleep(wait)
+    log.info("Chrome page loaded successfully")
+    return driver
+
+
 def getHtmlTorBrowser(tbb_dir, wait=45):
     log.info("Launching Tor Browser for IPLeak test")
     if TorBrowserDriver is None:
         raise RuntimeError("tbselenium is required for Tor Browser")
 
-    from pyvirtualdisplay import Display
     display = None
     if helpers.HEADLESS_TBB:
         display = Display()
@@ -146,6 +164,9 @@ def main():
 
     log.info("Firefox test started")
     runSelectedBrowser("Firefox", getHtmlFirefox, wait=45)
+
+    log.info("Chrome test started")
+    runSelectedBrowser("Chrome", getHtmlChrome, wait=45)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:
