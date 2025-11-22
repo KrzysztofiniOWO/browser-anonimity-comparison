@@ -163,17 +163,17 @@ def main():
     log.module("Starting IPLeak module")
 
     log.info("Firefox test started")
-    runSelectedBrowser("Firefox", getHtmlFirefox, wait=45)
+    runSelectedBrowser("Firefox", getHtmlFirefox, wait=5)
 
     log.info("Chrome test started")
-    runSelectedBrowser("Chrome", getHtmlChrome, wait=45)
+    runSelectedBrowser("Chrome", getHtmlChrome, wait=5)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:
         log.warning("Tor Browser folder not found")
     else:
         log.info("Tor Browser test started")
-        runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=45, tbb_dir=tbb_dir)
+        runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=5, tbb_dir=tbb_dir)
 
     log.finish("IPLeak module completed")
 
