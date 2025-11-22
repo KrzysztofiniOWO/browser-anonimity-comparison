@@ -142,17 +142,17 @@ def main():
     log.module("Starting PixelScan module")
 
     log.info("Firefox test started")
-    runSelectedBrowser("Firefox", getHtmlFirefox, wait=50)
+    runSelectedBrowser("Firefox", getHtmlFirefox, wait=8)
 
     log.info("Chrome test started")
-    runSelectedBrowser("Chrome", getHtmlChrome, wait=50)
+    runSelectedBrowser("Chrome", getHtmlChrome, wait=8)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:
         log.warning("Tor Browser folder not found")
     else:
         log.info("Tor Browser test started")
-        runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=80, tbb_dir=tbb_dir)
+        runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=8, tbb_dir=tbb_dir)
 
     log.finish("PixelScan module completed")
 
