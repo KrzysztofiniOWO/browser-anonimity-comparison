@@ -188,7 +188,7 @@ def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
                 raise RuntimeError("No tbb_dir for Tor Browser")
             html, ua = getter_fn(tbb_dir, wait=wait)
         else:
-            html, ua = getter_fn(headless=helpers.HEADLESS_FIREFOX, wait=wait)
+            html, ua = getter_fn(headless=helpers.HEADLESS, wait=wait)
 
         parsed = parseBrowserleaksIPHtml(html)
         if not parsed.get("ip"):

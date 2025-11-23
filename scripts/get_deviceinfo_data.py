@@ -174,7 +174,7 @@ def runSelectedBrowser(browser_name, getter_fn, wait=10, tbb_dir=None):
                 raise RuntimeError("No tbb_dir for Tor Browser")
             html = getter_fn(tbb_dir, wait=wait)
         else:
-            html = getter_fn(headless=helpers.HEADLESS_FIREFOX, wait=wait)
+            html = getter_fn(headless=helpers.HEADLESS, wait=wait)
 
         parsed = parseDeviceInfoHtml(html)
         result["data"] = parsed

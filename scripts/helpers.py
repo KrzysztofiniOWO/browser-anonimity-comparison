@@ -9,12 +9,13 @@ import logging
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data"
 DATA_DIR.mkdir(exist_ok=True)
-HEADLESS_FIREFOX = os.environ.get("HEADLESS_FIREFOX", "1") != "0"
+HEADLESS = os.environ.get("HEADLESS", "1") != "0"
 HEADLESS_TBB = os.environ.get("HEADLESS_TBB", "1") != "0"
 
 TOR_BROWSER_DIR = os.environ.get("TOR_BROWSER_DIR", None)
 TOR_BROWSER_BINARY = os.environ.get("TOR_BROWSER_BINARY", "/home/kali/Magisterka/tor-browser/Browser/firefox")
 FIREFOX_BINARY = os.environ.get("FIREFOX_BINARY", "/usr/bin/firefox")
+CHROME_BINARY = os.environ.get("CHROME_BINARY", "/usr/bin/chromium-browser")
 
 #----------LOGGING-----------
 
