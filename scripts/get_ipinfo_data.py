@@ -167,7 +167,7 @@ def main():
 
     log.info("Starting Firefox IP info test (browser-driven)")
     try:
-        data, ua = getHtmlFirefox(headless=helpers.HEADLESS_FIREFOX, wait=4)
+        data, ua = getHtmlFirefox(headless=helpers.HEADLESS, wait=4)
         if not data:
             log.warning("Firefox webdriver did not return data, falling back to requests")
             data = fetch_ipinfo()
@@ -177,7 +177,7 @@ def main():
 
     log.info("Starting Chrome IP info test (browser-driven)")
     try:
-        data, ua = getHtmlChrome(headless=helpers.HEADLESS_FIREFOX, wait=4)
+        data, ua = getHtmlChrome(headless=helpers.HEADLESS, wait=4)
         if not data:
             log.warning("Chrome webdriver did not return data, falling back to requests")
             data = fetch_ipinfo()

@@ -113,7 +113,7 @@ def runSelectedBrowser(browser_name, getter_fn, wait=50, tbb_dir=None):
                 raise RuntimeError("No tbb_dir for Tor Browser")
             driver, display = getter_fn(tbb_dir, wait=wait)
         else:
-            driver = getter_fn(headless=helpers.HEADLESS_FIREFOX, wait=wait)
+            driver = getter_fn(headless=helpers.HEADLESS, wait=wait)
 
         parsed = parsePixelScanHtml(driver)
         result["data"] = parsed

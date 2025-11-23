@@ -106,7 +106,7 @@ def runSelectedBrowser(browser_name, getter_fn, wait=60, tbb_dir=None):
                 raise RuntimeError("No tbb_dir for Tor Browser")
             driver, display = getter_fn(tbb_dir, wait=wait)
         else:
-            driver = getter_fn(headless=helpers.HEADLESS_FIREFOX, wait=wait)
+            driver = getter_fn(headless=helpers.HEADLESS, wait=wait)
 
         parsed = parseCreepJS(driver)
         result["data"] = parsed
