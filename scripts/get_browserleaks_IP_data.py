@@ -198,12 +198,12 @@ def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
         filtered = filterOnlyImportantIP(parsed)
         result["data"] = filtered
 
-        helpers.saveAsJson(browser_name, ts_safe, result, "browserleaks_ip")
+        helpers.saveAsJson(browser_name, result, "browserleaks_ip")
 
         log.save(f"Saved BrowserLeaks IP data for {browser_name}")
     except Exception as e:
         meta["error"] = str(e)
-        helpers.saveAsJson(browser_name, ts_safe, result, "browserleaks_ip")
+        helpers.saveAsJson(browser_name, result, "browserleaks_ip")
         log.error(f"Error during {browser_name} test: {e}")
 
     return result

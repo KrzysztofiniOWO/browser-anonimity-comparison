@@ -157,7 +157,7 @@ def save_data(browser_name, data, ua=None, category="ipinfo"):
     ts_iso = helpers.getDatetimeNow()
     ts_safe = helpers.replaceDatetimeSeparators(ts_iso)
     out = {"meta_ts": ts_iso, "user_agent": ua, "data": data}
-    helpers.saveAsJson(browser_name, ts_safe, out, category)
+    helpers.saveAsJson(browser_name, out, category)
     log.save(f"Saved IP info data for {browser_name}")
     return True
 

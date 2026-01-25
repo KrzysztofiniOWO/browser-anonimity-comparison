@@ -156,13 +156,13 @@ def runSelectedBrowser(browser_name, getter_fn, wait=50, tbb_dir=None):
         parsed = parseBrowserScan(driver)
         result["data"] = parsed
 
-        helpers.saveAsJson(browser_name, ts_safe, result, "browserscan")
+        helpers.saveAsJson(browser_name, result, "browserscan")
         log.save(f"Saved BrowserScan data for {browser_name}")
 
     except Exception as e:
         meta["error"] = str(e)
         log.error(f"Error during BrowserScan test ({browser_name}): {e}")
-        helpers.saveAsJson(browser_name, ts_safe, result, "browserscan")
+        helpers.saveAsJson(browser_name, result, "browserscan")
 
     finally:
         try:

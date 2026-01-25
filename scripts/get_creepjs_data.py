@@ -111,13 +111,13 @@ def runSelectedBrowser(browser_name, getter_fn, wait=60, tbb_dir=None):
         parsed = parseCreepJS(driver)
         result["data"] = parsed
 
-        helpers.saveAsJson(browser_name, ts_safe, result, "creepjs")
+        helpers.saveAsJson(browser_name, result, "creepjs")
         log.save(f"Saved CreepJS data for {browser_name}")
 
     except Exception as e:
         meta["error"] = str(e)
         log.error(f"Error during {browser_name} CreepJS test: {e}")
-        helpers.saveAsJson(browser_name, ts_safe, result, "creepjs")
+        helpers.saveAsJson(browser_name, result, "creepjs")
 
     finally:
         try:

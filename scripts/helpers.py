@@ -73,10 +73,10 @@ def getDatetimeNow():
 def replaceDatetimeSeparators(ts_iso):
     return ts_iso.replace(":", "-")
 
-def saveAsJson(browser_name, timestamp_iso, data, category):
+def saveAsJson(browser_name, data, category):
     folder = (DATA_DIR / category / browser_name.lower()).resolve()
     folder.mkdir(parents=True, exist_ok=True)
-    fname = folder / f"{timestamp_iso}.json"
+    fname = folder / f"{browser_name}.json"
     with open(fname, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     logger.save(f"JSON saved to: {fname}")
