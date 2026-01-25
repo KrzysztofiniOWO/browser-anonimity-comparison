@@ -141,14 +141,14 @@ def runSelectedBrowser(browser_name, getter_fn, wait=4, tbb_dir=None):
         meta["user_agent"] = ua
         result["data"] = filterOnlyImportantJS(parsed)
 
-        helpers.saveAsJson(browser_name, ts_safe, result, "browserleaks_javascript")
+        helpers.saveAsJson(browser_name, result, "browserleaks_javascript")
         log.save(f"Saved JavaScript results for {browser_name}")
         return result
 
     except Exception as e:
         meta["error"] = str(e)
         log.error(f"Error during {browser_name} JS test: {e}")
-        helpers.saveAsJson(browser_name, ts_safe, result, "browserleaks_javascript")
+        helpers.saveAsJson(browser_name, result, "browserleaks_javascript")
         return result
 
 

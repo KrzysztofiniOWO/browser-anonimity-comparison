@@ -176,13 +176,13 @@ def runSelectedBrowser(browser_name, getter_fn, wait=30, tbb_dir=None):
 
         parsed = parseAmiUniqueHtml(driver)
         result["data"] = parsed
-        helpers.saveAsJson(browser_name, ts_safe, result, "amiunique")
+        helpers.saveAsJson(browser_name, result, "amiunique")
         log.save(f"Saved AmiUnique data for {browser_name}")
 
     except Exception as e:
         meta["error"] = str(e)
         log.error(f"Error during {browser_name} test: {e}")
-        helpers.saveAsJson(browser_name, ts_safe, result, "amiunique")
+        helpers.saveAsJson(browser_name, result, "amiunique")
 
     finally:
         try:

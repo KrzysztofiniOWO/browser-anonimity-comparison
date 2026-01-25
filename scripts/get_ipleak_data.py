@@ -138,13 +138,13 @@ def runSelectedBrowser(browser_name, getter_fn, wait=45, tbb_dir=None):
 
         parsed = parseIpLeakHtml(driver)
         result["data"] = parsed
-        helpers.saveAsJson(browser_name, ts_safe, result, "ipleak")
+        helpers.saveAsJson(browser_name, result, "ipleak")
         log.save(f"Saved IPLeak data for {browser_name}")
 
     except Exception as e:
         meta["error"] = str(e)
         log.error(f"Error during {browser_name} IPLeak test: {e}")
-        helpers.saveAsJson(browser_name, ts_safe, result, "ipleak")
+        helpers.saveAsJson(browser_name, result, "ipleak")
 
     finally:
         try:

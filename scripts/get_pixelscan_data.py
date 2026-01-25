@@ -117,13 +117,13 @@ def runSelectedBrowser(browser_name, getter_fn, wait=50, tbb_dir=None):
 
         parsed = parsePixelScanHtml(driver)
         result["data"] = parsed
-        helpers.saveAsJson(browser_name, ts_safe, result, "pixelscan")
+        helpers.saveAsJson(browser_name, result, "pixelscan")
         log.save(f"Saved PixelScan data for {browser_name}")
 
     except Exception as e:
         meta["error"] = str(e)
         log.error(f"Error during {browser_name} PixelScan test: {e}")
-        helpers.saveAsJson(browser_name, ts_safe, result, "pixelscan")
+        helpers.saveAsJson(browser_name, result, "pixelscan")
 
     finally:
         try:

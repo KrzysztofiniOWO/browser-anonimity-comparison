@@ -178,13 +178,13 @@ def runSelectedBrowser(browser_name, getter_fn, wait=10, tbb_dir=None):
 
         parsed = parseDeviceInfoHtml(html)
         result["data"] = parsed
-        helpers.saveAsJson(browser_name, ts_safe, result, "deviceinfo")
+        helpers.saveAsJson(browser_name, result, "deviceinfo")
         log.save(f"Saved DeviceInfo data for {browser_name}")
 
     except Exception as e:
         meta["error"] = str(e)
         log.error(f"Error while running deviceinfo.me test for {browser_name}: {e}")
-        helpers.saveAsJson(browser_name, ts_safe, result, "deviceinfo")
+        helpers.saveAsJson(browser_name, result, "deviceinfo")
 
     return result
 
