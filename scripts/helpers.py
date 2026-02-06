@@ -16,6 +16,8 @@ TOR_BROWSER_DIR = os.environ.get("TOR_BROWSER_DIR", None)
 TOR_BROWSER_BINARY = os.environ.get("TOR_BROWSER_BINARY", "/home/kali/Magisterka/tor-browser/Browser/firefox")
 FIREFOX_BINARY = os.environ.get("FIREFOX_BINARY", "/usr/bin/firefox")
 CHROME_BINARY = os.environ.get("CHROME_BINARY", "/usr/bin/chromium-browser")
+EDGE_BINARY = os.environ.get("EDGE_BINARY", "/usr/bin/microsoft-edge")
+BRAVE_BINARY = os.environ.get("BRAVE_BINARY", "/usr/bin/brave-browser")
 
 #----------LOGGING-----------
 

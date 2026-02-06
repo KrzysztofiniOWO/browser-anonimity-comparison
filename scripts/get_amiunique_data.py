@@ -10,6 +10,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.edge.options import Options as EdgeOptions
 
 URL = "https://amiunique.org/fingerprint"
 
@@ -49,7 +52,7 @@ def clean_multiline(value):
     return "\n".join(list(dict.fromkeys(lines)))
 
 
-def getHtmlFirefox(headless=True, wait=30):
+def getHtmlFirefox(headless=False, wait=30):
     log.info("Launching Firefox browser session")
     opts = FirefoxOptions()
     opts.binary_location = helpers.FIREFOX_BINARY
@@ -62,12 +65,13 @@ def getHtmlFirefox(headless=True, wait=30):
     return driver
 
 
-def getHtmlChrome(headless=True, wait=30):
+def getHtmlChrome(headless=False, wait=30):
     log.info("Launching Chrome browser session")
     opts = ChromeOptions()
     if headless:
         opts.add_argument("--headless=new")
         opts.add_argument("--disable-gpu")
+    opts.add_argument("--user-data-dir=/tmp/chrome-profile")
     opts.add_argument("--no-sandbox")
     opts.add_argument("--disable-dev-shm-usage")
 
@@ -78,6 +82,58 @@ def getHtmlChrome(headless=True, wait=30):
     driver.get(URL)
     time.sleep(wait)
     log.info("Chrome page loaded successfully")
+    return driver
+
+
+def getHtmlEdge(headless=False, wait=30):
+    log.info("Launching Edge browser session")
+    opts = EdgeOptions()
+    opts.binary_location = helpers.EDGE_BINARY
+
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+    
+    opts.add_argument("--user-data-dir=/home/kali/.config/microsoft-edge/Default")
+    
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+
+    driver = webdriver.Edge(
+        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        options=opts
+    )
+
+    driver.get(URL)
+    time.sleep(wait)
+    log.info("Edge page loaded successfully")
+    return driver
+
+
+def getHtmlBrave(headless=False, wait=30):
+    log.info("Launching Brave browser session")
+
+    opts = ChromeOptions()
+    opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
+    opts.add_argument("--user-data-dir=/tmp/brave-profile")
+
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+    opts.add_argument("--disable-blink-features=AutomationControlled")
+
+    driver = webdriver.Chrome(
+        service=ChromeService("/usr/bin/chromedriver"),
+        options=opts
+    )
+
+    driver.get(URL)
+    time.sleep(wait)
+    ua = driver.execute_script("return navigator.userAgent;")
+    log.info("Brave page loaded successfully")
     return driver
 
 
@@ -200,20 +256,26 @@ def runSelectedBrowser(browser_name, getter_fn, wait=30, tbb_dir=None):
 def main():
     log.module("Starting AmiUnique module")
 
-    log.info("Firefox test started")
-    runSelectedBrowser("Firefox", getHtmlFirefox, wait=30)
+    # log.info("Firefox test started")
+    # runSelectedBrowser("Firefox", getHtmlFirefox, wait=30)
 
-    log.info("Chrome test started")
-    runSelectedBrowser("Chrome", getHtmlChrome, wait=30)
+    # log.info("Chrome test started")
+    # runSelectedBrowser("Chrome", getHtmlChrome, wait=30)
 
-    tbb_dir = helpers.determineTorBrowserDir()
-    if not tbb_dir:
-        log.warning("Tor Browser folder not found")
-    else:
-        log.info("Tor Browser test started")
-        runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=30, tbb_dir=tbb_dir)
+    # log.info("Edge test started")
+    # runSelectedBrowser("Edge", getHtmlEdge, wait=30)
 
-    log.finish("AmiUnique module completed")
+    log.info("Brave test started")
+    runSelectedBrowser("Brave", getHtmlBrave, wait=30)
+
+    # tbb_dir = helpers.determineTorBrowserDir()
+    # if not tbb_dir:
+    #     log.warning("Tor Browser folder not found")
+    # else:
+    #     log.info("Tor Browser test started")
+    #     runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=30, tbb_dir=tbb_dir)
+
+    # log.finish("AmiUnique module completed")
 
 
 if __name__ == "__main__":
