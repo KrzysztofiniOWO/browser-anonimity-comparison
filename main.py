@@ -12,8 +12,8 @@ from scripts import (
 )
 
 def main():
-    # get_amiunique_data.main()
-    get_browserleaks_IP_data.main()
+    get_amiunique_data.main()
+    # get_browserleaks_IP_data.main()
     # get_browserleaks_JS_data.main()
     # get_browserscan_data.main()
     # get_creepjs_data.main()

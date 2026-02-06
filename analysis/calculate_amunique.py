@@ -207,7 +207,7 @@ print(df)
 output_dir = pathlib.Path("results")
 output_dir.mkdir(exist_ok=True)
 
-output_path = output_dir / "amiunique_metrics.csv"
+output_path = output_dir / "amiunique_fingerprinting_metrics.csv"
 df.to_csv(output_path)
 
 print(f"[OK] Wyniki zapisane do: {output_path.resolve()}")

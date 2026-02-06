@@ -11,6 +11,9 @@ from tbselenium.tbdriver import TorBrowserDriver
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.edge.service import Service as EdgeService
 
 URL = "https://browserleaks.com/ip"
 
@@ -87,7 +90,7 @@ def extractIP(text):
     return m.group(1) if m else None
 
 
-def getHtmlFirefox(headless=True, wait=3):
+def getHtmlFirefox(headless=False, wait=3):
 
     log.info("Launching Firefox browser session")
     opts = FirefoxOptions()
@@ -109,7 +112,7 @@ def getHtmlFirefox(headless=True, wait=3):
     return html, ua
 
 
-def getHtmlChrome(headless=True, wait=3):
+def getHtmlChrome(headless=False, wait=3):
 
     log.info("Launching Chrome browser session")
     opts = ChromeOptions()
@@ -133,6 +136,55 @@ def getHtmlChrome(headless=True, wait=3):
         driver.quit()
         log.info("Closed Chrome session")
 
+    return html, ua
+
+
+def getHtmlEdge(headless=False, wait=3):
+    log.info("Launching Edge browser session")
+    opts = EdgeOptions()
+    opts.binary_location = helpers.EDGE_BINARY
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+    opts.add_argument("--user-data-dir=/home/kali/.config/microsoft-edge/Default")
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+
+    driver = webdriver.Edge(service=EdgeService('/usr/local/bin/msedgedriver'), options=opts)
+    try:
+        driver.get(URL)
+        time.sleep(wait)
+        html = driver.page_source
+        ua = driver.execute_script("return navigator.userAgent;")
+        log.info("Edge page loaded successfully")
+    finally:
+        driver.quit()
+        log.info("Closed Edge session")
+    return html, ua
+
+
+def getHtmlBrave(headless=False, wait=3):
+    log.info("Launching Brave browser session")
+    opts = ChromeOptions()
+    opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+    opts.add_argument("--user-data-dir=/tmp/brave-profile")
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+    opts.add_argument("--disable-blink-features=AutomationControlled")
+
+    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
+    try:
+        driver.get(URL)
+        time.sleep(wait)
+        html = driver.page_source
+        ua = driver.execute_script("return navigator.userAgent;")
+        log.info("Brave page loaded successfully")
+    finally:
+        driver.quit()
+        log.info("Closed Brave session")
     return html, ua
 
 
@@ -217,6 +269,12 @@ def main():
 
     log.info("Chrome test started")
     runSelectedBrowser("Chrome", getHtmlChrome, wait=3)
+
+    log.info("Edge test started")
+    runSelectedBrowser("Edge", getHtmlEdge, wait=3)
+
+    log.info("Brave test started")
+    runSelectedBrowser("Brave", getHtmlBrave, wait=3)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:
