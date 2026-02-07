@@ -96,7 +96,7 @@ def getHtmlEdge(headless=True, wait=3):
     opts.add_argument("--disable-gpu")
 
     driver = webdriver.Edge(
-        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        service=EdgeService(helpers.MSEDGEDRIVER), 
         options=opts
     )
 
@@ -124,9 +124,8 @@ def getHtmlBrave(headless=True, wait=3):
 
     opts.add_argument("--disable-gpu")
     opts.add_argument("--disable-blink-features=AutomationControlled")
-    opts.add_argument("--user-data-dir=/tmp/brave-js-profile")
 
-    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
+    driver = webdriver.Chrome(service=ChromeService(helpers.CHROMEDRIVER), options=opts)
 
     try:
         driver.get(URL)

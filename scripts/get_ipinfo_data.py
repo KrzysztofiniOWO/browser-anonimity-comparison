@@ -110,7 +110,7 @@ def getHtmlEdge(headless=True, wait=3):
     opts.binary_location = helpers.EDGE_BINARY
 
     driver = webdriver.Edge(
-        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        service=EdgeService(helpers.MSEDGEDRIVER), 
         options=opts
     )
 
@@ -136,10 +136,9 @@ def getHtmlBrave(headless=True, wait=3):
         opts.add_argument("--disable-gpu")
 
     opts.add_argument("--disable-blink-features=AutomationControlled")
-    opts.add_argument("--user-data-dir=/tmp/brave-ipinfo-profile")
     opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
 
-    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
+    driver = webdriver.Chrome(service=ChromeService(helpers.CHROMEDRIVER), options=opts)
 
     try:
         data, ua = get_ipinfo_from_driver(driver, wait=wait)
