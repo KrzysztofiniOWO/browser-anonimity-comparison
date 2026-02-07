@@ -119,8 +119,6 @@ def getHtmlChrome(headless=False, wait=3):
     if headless:
         opts.add_argument("--headless=new")
         opts.add_argument("--disable-gpu")
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
 
     if hasattr(helpers, "CHROME_BINARY") and helpers.CHROME_BINARY:
         opts.binary_location = helpers.CHROME_BINARY
@@ -147,8 +145,6 @@ def getHtmlEdge(headless=False, wait=3):
         opts.add_argument("--headless=new")
         opts.add_argument("--disable-gpu")
     opts.add_argument("--user-data-dir=/home/kali/.config/microsoft-edge/Default")
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
 
     driver = webdriver.Edge(service=EdgeService('/usr/local/bin/msedgedriver'), options=opts)
     try:
@@ -171,8 +167,6 @@ def getHtmlBrave(headless=False, wait=3):
         opts.add_argument("--headless=new")
         opts.add_argument("--disable-gpu")
     opts.add_argument("--user-data-dir=/tmp/brave-profile")
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--disable-blink-features=AutomationControlled")
 
     driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)

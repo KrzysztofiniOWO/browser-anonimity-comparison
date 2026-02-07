@@ -10,6 +10,9 @@ from tbselenium.tbdriver import TorBrowserDriver
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.edge.service import Service as EdgeService
 
 IPINFO_URL = "https://ipinfo.io/json"
 TOR_PROXY = "socks5h://127.0.0.1:9050"
@@ -49,8 +52,8 @@ def get_ipinfo_from_driver(driver, wait=3):
 
 
 def getHtmlFirefox(headless=True, wait=3):
-
     log.info("Launching Firefox browser session for ipinfo")
+
     opts = FirefoxOptions()
     if hasattr(helpers, "FIREFOX_BINARY") and helpers.FIREFOX_BINARY:
         opts.binary_location = helpers.FIREFOX_BINARY
@@ -71,8 +74,8 @@ def getHtmlFirefox(headless=True, wait=3):
 
 
 def getHtmlChrome(headless=True, wait=3):
-
     log.info("Launching Chrome browser session for ipinfo")
+
     opts = ChromeOptions()
     if headless:
         opts.add_argument("--headless=new")
@@ -96,8 +99,62 @@ def getHtmlChrome(headless=True, wait=3):
     return data, ua
 
 
-def getHtmlTorBrowser(tbb_dir, wait=5):
+def getHtmlEdge(headless=True, wait=3):
+    log.info("Launching Edge browser session for ipinfo")
 
+    opts = EdgeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+
+    opts.binary_location = helpers.EDGE_BINARY
+
+    driver = webdriver.Edge(
+        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        options=opts
+    )
+
+    try:
+        data, ua = get_ipinfo_from_driver(driver, wait=wait)
+        log.info("Edge ipinfo fetch completed")
+    finally:
+        try:
+            driver.quit()
+        except:
+            pass
+        log.info("Closed Edge session")
+
+    return data, ua
+
+
+def getHtmlBrave(headless=True, wait=3):
+    log.info("Launching Brave browser session for ipinfo")
+
+    opts = ChromeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+
+    opts.add_argument("--disable-blink-features=AutomationControlled")
+    opts.add_argument("--user-data-dir=/tmp/brave-ipinfo-profile")
+    opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
+
+    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
+
+    try:
+        data, ua = get_ipinfo_from_driver(driver, wait=wait)
+        log.info("Brave ipinfo fetch completed")
+    finally:
+        try:
+            driver.quit()
+        except:
+            pass
+        log.info("Closed Brave session")
+
+    return data, ua
+
+
+def getHtmlTorBrowser(tbb_dir, wait=5):
     log.info("Launching Tor Browser session for ipinfo")
 
     display = None
@@ -184,6 +241,26 @@ def main():
         save_data("chrome", data, ua)
     except Exception as e:
         log.error(f"Unhandled error in Chrome ipinfo test: {e}")
+
+    log.info("Starting Edge IP info test (browser-driven)")
+    try:
+        data, ua = getHtmlEdge(headless=helpers.HEADLESS, wait=4)
+        if not data:
+            log.warning("Edge webdriver did not return data, falling back to requests")
+            data = fetch_ipinfo()
+        save_data("edge", data, ua)
+    except Exception as e:
+        log.error(f"Unhandled error in edge ipinfo test: {e}")
+
+    log.info("Starting Brave IP info test (browser-driven)")
+    try:
+        data, ua = getHtmlBrave(headless=helpers.HEADLESS, wait=4)
+        if not data:
+            log.warning("Brave webdriver did not return data, falling back to requests")
+            data = fetch_ipinfo()
+        save_data("brave", data, ua)
+    except Exception as e:
+        log.error(f"Unhandled error in Brave ipinfo test: {e}")
 
     log.info("Starting Tor Browser IP info test (browser-driven / tor proxy fallback)")
     tbb_dir = None

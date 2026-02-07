@@ -9,6 +9,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.edge.service import Service as EdgeService
 
 URL = "https://pixelscan.net/fingerprint"
 
@@ -46,6 +49,51 @@ def getHtmlChrome(headless=True, wait=50):
     log.info(f"Waiting {wait}s for full JS load...")
     time.sleep(wait)
     log.info("Chrome page loaded successfully")
+    return driver
+
+
+def getHtmlEdge(headless=True, wait=50):
+    log.info("Launching Edge for PixelScan test")
+
+    opts = EdgeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+
+    opts.binary_location = helpers.EDGE_BINARY
+
+    driver = webdriver.Edge(
+        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        options=opts
+    )
+
+    driver.get(URL)
+    log.info(f"Waiting {wait}s for full JS load...")
+    time.sleep(wait)
+    log.info("Edge page loaded successfully")
+
+    return driver
+
+
+def getHtmlBrave(headless=True, wait=50):
+    log.info("Launching Brave for PixelScan test")
+
+    opts = ChromeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+
+    opts.add_argument("--disable-blink-features=AutomationControlled")
+    opts.add_argument("--user-data-dir=/tmp/brave-pixelscan-profile")
+    opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
+
+    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
+
+    driver.get(URL)
+    log.info(f"Waiting {wait}s for full JS load...")
+    time.sleep(wait)
+    log.info("Brave page loaded successfully")
+
     return driver
 
 
@@ -146,6 +194,12 @@ def main():
 
     log.info("Chrome test started")
     runSelectedBrowser("Chrome", getHtmlChrome, wait=8)
+
+    log.info("Edge test started")
+    runSelectedBrowser("Edge", getHtmlEdge, wait=8)
+
+    log.info("Brave test started")
+    runSelectedBrowser("Brave", getHtmlBrave, wait=8)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:

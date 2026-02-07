@@ -11,6 +11,9 @@ from tbselenium.tbdriver import TorBrowserDriver
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.edge.service import Service as EdgeService
 
 URL = "https://browserleaks.com/javascript"
 
@@ -78,6 +81,62 @@ def getHtmlChrome(headless=True, wait=3):
     finally:
         driver.quit()
         log.info("Closed Chrome browser")
+
+    return html, ua
+
+def getHtmlEdge(headless=True, wait=3):
+    log.info("Launching Edge for JS test")
+
+    opts = EdgeOptions()
+    opts.binary_location = helpers.EDGE_BINARY
+
+    if headless:
+        opts.add_argument("--headless=new")
+
+    opts.add_argument("--disable-gpu")
+
+    driver = webdriver.Edge(
+        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        options=opts
+    )
+
+    try:
+        driver.get(URL)
+        log.info("Loaded BrowserLeaks JS page in Edge")
+        time.sleep(wait)
+        ua = driver.execute_script("return navigator.userAgent;")
+        html = driver.page_source
+    finally:
+        driver.quit()
+        log.info("Closed Edge browser")
+
+    return html, ua
+
+
+def getHtmlBrave(headless=True, wait=3):
+    log.info("Launching Brave for JS test")
+
+    opts = ChromeOptions()
+    opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
+
+    if headless:
+        opts.add_argument("--headless=new")
+
+    opts.add_argument("--disable-gpu")
+    opts.add_argument("--disable-blink-features=AutomationControlled")
+    opts.add_argument("--user-data-dir=/tmp/brave-js-profile")
+
+    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
+
+    try:
+        driver.get(URL)
+        log.info("Loaded BrowserLeaks JS page in Brave")
+        time.sleep(wait)
+        ua = driver.execute_script("return navigator.userAgent;")
+        html = driver.page_source
+    finally:
+        driver.quit()
+        log.info("Closed Brave browser")
 
     return html, ua
 
@@ -160,6 +219,12 @@ def main():
 
     log.info("Chrome JS test started")
     runSelectedBrowser("Chrome", getHtmlChrome, wait=3)
+
+    log.info("Edge JS test started")
+    runSelectedBrowser("Edge", getHtmlEdge, wait=3)
+
+    log.info("Brave JS test started")
+    runSelectedBrowser("Brave", getHtmlBrave, wait=3)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:

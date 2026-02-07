@@ -10,6 +10,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.edge.service import Service as EdgeService
 
 URL = "https://abrahamjuliot.github.io/creepjs/"
 
@@ -36,13 +39,55 @@ def getHtmlChrome(headless=True, wait=60):
     opts = ChromeOptions()
     if headless:
         opts.add_argument("--headless=new")
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
 
     if hasattr(helpers, "CHROME_BINARY") and helpers.CHROME_BINARY:
         opts.binary_location = helpers.CHROME_BINARY
 
     driver = webdriver.Chrome(options=opts)
+    driver.get(URL)
+
+    log.info(f"Waiting {wait}s for CreepJS to fully render...")
+    time.sleep(wait)
+
+    return driver
+
+
+def getHtmlEdge(headless=True, wait=60):
+    log.info("Launching Edge for CreepJS test")
+
+    opts = EdgeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+
+    opts.add_argument("--disable-gpu")
+
+    opts.binary_location = helpers.EDGE_BINARY
+
+    driver = webdriver.Edge(
+        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        options=opts
+    )
+
+    driver.get(URL)
+
+    log.info(f"Waiting {wait}s for CreepJS to fully render...")
+    time.sleep(wait)
+
+    return driver
+
+
+def getHtmlBrave(headless=True, wait=60):
+    log.info("Launching Brave for CreepJS test")
+
+    opts = ChromeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+
+    opts.add_argument("--disable-blink-features=AutomationControlled")
+    opts.add_argument("--user-data-dir=/tmp/brave-creepjs-profile")
+    opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
+
+    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
     driver.get(URL)
 
     log.info(f"Waiting {wait}s for CreepJS to fully render...")
@@ -138,6 +183,12 @@ def main():
 
     log.info("Chrome test started")
     runSelectedBrowser("Chrome", getHtmlChrome, wait=10)
+
+    log.info("Edge test started")
+    runSelectedBrowser("Edge", getHtmlEdge, wait=10)
+
+    log.info("Brave test started")
+    runSelectedBrowser("Brave", getHtmlBrave, wait=10)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:
