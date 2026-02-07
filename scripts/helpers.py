@@ -19,6 +19,9 @@ CHROME_BINARY = os.environ.get("CHROME_BINARY", "/usr/bin/chromium-browser")
 EDGE_BINARY = os.environ.get("EDGE_BINARY", "/usr/bin/microsoft-edge")
 BRAVE_BINARY = os.environ.get("BRAVE_BINARY", "/usr/bin/brave-browser")
 
+CHROMEDRIVER = "/usr/bin/chromedriver"
+MSEDGEDRIVER = "/usr/local/bin/msedgedriver"
+
 #----------LOGGING-----------
 
 MODULE_LEVEL = 25

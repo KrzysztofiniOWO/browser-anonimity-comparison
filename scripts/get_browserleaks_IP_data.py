@@ -144,9 +144,8 @@ def getHtmlEdge(headless=False, wait=3):
     if headless:
         opts.add_argument("--headless=new")
         opts.add_argument("--disable-gpu")
-    opts.add_argument("--user-data-dir=/home/kali/.config/microsoft-edge/Default")
 
-    driver = webdriver.Edge(service=EdgeService('/usr/local/bin/msedgedriver'), options=opts)
+    driver = webdriver.Edge(service=EdgeService(helpers.MSEDGEDRIVER), options=opts)
     try:
         driver.get(URL)
         time.sleep(wait)
@@ -166,10 +165,9 @@ def getHtmlBrave(headless=False, wait=3):
     if headless:
         opts.add_argument("--headless=new")
         opts.add_argument("--disable-gpu")
-    opts.add_argument("--user-data-dir=/tmp/brave-profile")
     opts.add_argument("--disable-blink-features=AutomationControlled")
 
-    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
+    driver = webdriver.Chrome(service=ChromeService(helpers.CHROMEDRIVER), options=opts)
     try:
         driver.get(URL)
         time.sleep(wait)

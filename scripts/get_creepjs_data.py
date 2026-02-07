@@ -64,7 +64,7 @@ def getHtmlEdge(headless=True, wait=60):
     opts.binary_location = helpers.EDGE_BINARY
 
     driver = webdriver.Edge(
-        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        service=EdgeService(helpers.MSEDGEDRIVER), 
         options=opts
     )
 
@@ -84,10 +84,9 @@ def getHtmlBrave(headless=True, wait=60):
         opts.add_argument("--headless=new")
 
     opts.add_argument("--disable-blink-features=AutomationControlled")
-    opts.add_argument("--user-data-dir=/tmp/brave-creepjs-profile")
     opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
 
-    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
+    driver = webdriver.Chrome(service=ChromeService(helpers.CHROMEDRIVER), options=opts)
     driver.get(URL)
 
     log.info(f"Waiting {wait}s for CreepJS to fully render...")

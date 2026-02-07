@@ -71,7 +71,6 @@ def getHtmlChrome(headless=False, wait=30):
     if headless:
         opts.add_argument("--headless=new")
         opts.add_argument("--disable-gpu")
-    opts.add_argument("--user-data-dir=/tmp/chrome-profile")
 
     if hasattr(helpers, "CHROME_BINARY") and helpers.CHROME_BINARY:
         opts.binary_location = helpers.CHROME_BINARY
@@ -92,11 +91,8 @@ def getHtmlEdge(headless=False, wait=30):
         opts.add_argument("--headless=new")
         opts.add_argument("--disable-gpu")
     
-    opts.add_argument("--user-data-dir=/home/kali/.config/microsoft-edge/Default")
-    
-
     driver = webdriver.Edge(
-        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        service=EdgeService(helpers.MSEDGEDRIVER), 
         options=opts
     )
 
@@ -111,7 +107,6 @@ def getHtmlBrave(headless=False, wait=30):
 
     opts = ChromeOptions()
     opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
-    opts.add_argument("--user-data-dir=/tmp/brave-profile")
 
     if headless:
         opts.add_argument("--headless=new")
@@ -120,7 +115,7 @@ def getHtmlBrave(headless=False, wait=30):
     opts.add_argument("--disable-blink-features=AutomationControlled")
 
     driver = webdriver.Chrome(
-        service=ChromeService("/usr/bin/chromedriver"),
+        service=ChromeService(helpers.CHROMEDRIVER),
         options=opts
     )
 
