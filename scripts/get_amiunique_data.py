@@ -72,8 +72,6 @@ def getHtmlChrome(headless=False, wait=30):
         opts.add_argument("--headless=new")
         opts.add_argument("--disable-gpu")
     opts.add_argument("--user-data-dir=/tmp/chrome-profile")
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
 
     if hasattr(helpers, "CHROME_BINARY") and helpers.CHROME_BINARY:
         opts.binary_location = helpers.CHROME_BINARY
@@ -96,8 +94,6 @@ def getHtmlEdge(headless=False, wait=30):
     
     opts.add_argument("--user-data-dir=/home/kali/.config/microsoft-edge/Default")
     
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
 
     driver = webdriver.Edge(
         service=EdgeService('/usr/local/bin/msedgedriver'), 
@@ -121,8 +117,6 @@ def getHtmlBrave(headless=False, wait=30):
         opts.add_argument("--headless=new")
         opts.add_argument("--disable-gpu")
 
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--disable-blink-features=AutomationControlled")
 
     driver = webdriver.Chrome(
@@ -256,26 +250,26 @@ def runSelectedBrowser(browser_name, getter_fn, wait=30, tbb_dir=None):
 def main():
     log.module("Starting AmiUnique module")
 
-    # log.info("Firefox test started")
-    # runSelectedBrowser("Firefox", getHtmlFirefox, wait=30)
+    log.info("Firefox test started")
+    runSelectedBrowser("Firefox", getHtmlFirefox, wait=30)
 
-    # log.info("Chrome test started")
-    # runSelectedBrowser("Chrome", getHtmlChrome, wait=30)
+    log.info("Chrome test started")
+    runSelectedBrowser("Chrome", getHtmlChrome, wait=30)
 
-    # log.info("Edge test started")
-    # runSelectedBrowser("Edge", getHtmlEdge, wait=30)
+    log.info("Edge test started")
+    runSelectedBrowser("Edge", getHtmlEdge, wait=30)
 
     log.info("Brave test started")
     runSelectedBrowser("Brave", getHtmlBrave, wait=30)
 
-    # tbb_dir = helpers.determineTorBrowserDir()
-    # if not tbb_dir:
-    #     log.warning("Tor Browser folder not found")
-    # else:
-    #     log.info("Tor Browser test started")
-    #     runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=30, tbb_dir=tbb_dir)
+    tbb_dir = helpers.determineTorBrowserDir()
+    if not tbb_dir:
+        log.warning("Tor Browser folder not found")
+    else:
+        log.info("Tor Browser test started")
+        runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=30, tbb_dir=tbb_dir)
 
-    # log.finish("AmiUnique module completed")
+    log.finish("AmiUnique module completed")
 
 
 if __name__ == "__main__":

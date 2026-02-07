@@ -11,6 +11,9 @@ from tbselenium.tbdriver import TorBrowserDriver
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.edge.service import Service as EdgeService
 
 URL = "https://www.deviceinfo.me/"
 
@@ -134,6 +137,62 @@ def getHtmlChrome(headless=True, wait=10):
     return html
 
 
+def getHtmlEdge(headless=True, wait=10):
+    log.info("Launching Edge for deviceinfo.me")
+
+    opts = EdgeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+
+
+    opts.binary_location = helpers.EDGE_BINARY
+
+    driver = webdriver.Edge(
+        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        options=opts
+    )
+
+    try:
+        log.info("Opening deviceinfo.me in Edge")
+        driver.get(URL)
+        time.sleep(wait)
+        html = driver.page_source
+        log.info("Page loaded successfully (Edge)")
+    finally:
+        driver.quit()
+        log.info("Closed Edge instance")
+
+    return html
+
+
+def getHtmlBrave(headless=True, wait=10):
+    log.info("Launching Brave for deviceinfo.me")
+
+    opts = ChromeOptions()
+    if headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-gpu")
+
+    opts.add_argument("--disable-blink-features=AutomationControlled")
+    opts.add_argument("--user-data-dir=/tmp/brave-deviceinfo-profile")
+    opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
+
+    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
+
+    try:
+        log.info("Opening deviceinfo.me in Brave")
+        driver.get(URL)
+        time.sleep(wait)
+        html = driver.page_source
+        log.info("Page loaded successfully (Brave)")
+    finally:
+        driver.quit()
+        log.info("Closed Brave instance")
+
+    return html
+
+
 def getHtmlTorBrowser(tbb_dir, wait=10):
     log.info("Launching Tor Browser for deviceinfo.me")
     if TorBrowserDriver is None:
@@ -197,6 +256,12 @@ def main():
 
     log.info("Running Chrome test")
     runSelectedBrowser("Chrome", getHtmlChrome, wait=10)
+
+    log.info("Running Edge test")
+    runSelectedBrowser("Edge", getHtmlEdge, wait=10)
+
+    log.info("Running Brave test")
+    runSelectedBrowser("Brave", getHtmlBrave, wait=10)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if not tbb_dir:

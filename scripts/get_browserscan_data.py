@@ -10,6 +10,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.edge.service import Service as EdgeService
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -70,6 +73,50 @@ def getHtmlChrome(headless=False, wait=50):
     driver = webdriver.Chrome(options=opts)
     driver.get(URL)
 
+    acceptConsent(driver)
+
+    log.info(f"Waiting {wait}s for BrowserScan to load...")
+    time.sleep(wait)
+    return driver
+
+
+def getHtmlEdge(headless=False, wait=50):
+    log.info("Launching Edge for BrowserScan test")
+
+    opts = EdgeOptions()
+    opts.headless = headless
+    opts.add_argument("--start-maximized")
+    opts.add_argument("--use-gl=desktop")
+
+    opts.binary_location = helpers.EDGE_BINARY
+
+    driver = webdriver.Edge(
+        service=EdgeService('/usr/local/bin/msedgedriver'), 
+        options=opts
+    )
+
+    driver.get(URL)
+    acceptConsent(driver)
+
+    log.info(f"Waiting {wait}s for BrowserScan to load...")
+    time.sleep(wait)
+    return driver
+
+
+def getHtmlBrave(headless=False, wait=50):
+    log.info("Launching Brave for BrowserScan test")
+
+    opts = ChromeOptions()
+    opts.headless = headless
+    opts.add_argument("--start-maximized")
+    opts.add_argument("--use-gl=desktop")
+    opts.add_argument("--disable-blink-features=AutomationControlled")
+    opts.add_argument("--user-data-dir=/tmp/brave-browserscan-profile")
+    opts.add_argument(f"--brave-binary={helpers.BRAVE_BINARY}")
+
+    driver = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver"), options=opts)
+
+    driver.get(URL)
     acceptConsent(driver)
 
     log.info(f"Waiting {wait}s for BrowserScan to load...")
@@ -183,6 +230,12 @@ def main():
 
     log.info("Chrome test started")
     runSelectedBrowser("Chrome", getHtmlChrome, wait=15)
+
+    log.info("Edge test started")
+    runSelectedBrowser("Edge", getHtmlEdge, wait=15)
+
+    log.info("Brave test started")
+    runSelectedBrowser("Brave", getHtmlBrave, wait=15)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if tbb_dir:
