@@ -48,6 +48,8 @@ Analyzes pixel-level rendering behavior to detect subtle fingerprinting differen
 
 To run the project You need to set paths for browsers and drivers according to your installation. I run the script on Ubuntu virtual machine for reference. 
 
+To use the script you can either use main.py and select tests you want to run there or run each module fron scripts directory separately. 
+
 ```python
 from pathlib import Path
 import os
