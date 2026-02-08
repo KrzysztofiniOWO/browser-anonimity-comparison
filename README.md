@@ -46,7 +46,7 @@ Analyzes pixel-level rendering behavior to detect subtle fingerprinting differen
 
 ### How to Launch and Set Paths
 
-The project automatically sets default paths for browsers and drivers. You can adjust them if needed by modifying environment variables or using the defaults below.
+To run the project You need to set paths for browsers and drivers according to your installation. I run the script on Ubuntu virtual machine for reference. 
 
 ```python
 from pathlib import Path
