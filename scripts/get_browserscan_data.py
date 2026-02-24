@@ -225,21 +225,21 @@ def main():
     log.module("Starting BrowserScan module")
 
     log.info("Firefox test started")
-    runSelectedBrowser("Firefox", getHtmlFirefox, wait=15)
+    runSelectedBrowser("Firefox", getHtmlFirefox, wait=40)
 
     log.info("Chrome test started")
-    runSelectedBrowser("Chrome", getHtmlChrome, wait=15)
+    runSelectedBrowser("Chrome", getHtmlChrome, wait=40)
 
     log.info("Edge test started")
-    runSelectedBrowser("Edge", getHtmlEdge, wait=15)
+    runSelectedBrowser("Edge", getHtmlEdge, wait=40)
 
     log.info("Brave test started")
-    runSelectedBrowser("Brave", getHtmlBrave, wait=15)
+    runSelectedBrowser("Brave", getHtmlBrave, wait=40)
 
     tbb_dir = helpers.determineTorBrowserDir()
     if tbb_dir:
         log.info("Tor Browser test started")
-        runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=15, tbb_dir=tbb_dir)
+        runSelectedBrowser("TorBrowser", getHtmlTorBrowser, wait=40, tbb_dir=tbb_dir)
     else:
         log.warning("Tor Browser folder not found")
 

@@ -25,30 +25,43 @@ def extract_number(text):
 
 def count_elements(text):
     if not is_present(text): return 0
+    if isinstance(text, list): return len(text)
     return len([line for line in str(text).split('\n') if line.strip()])
 
+def get_nested(data, key):
+    for part in key.split('.'):
+        if isinstance(data, dict):
+            data = data.get(part)
+        else:
+            return None
+    return data
+
 def get_penalty(val, tor_val, weight):
-    v_str, t_str = str(val).strip(), str(tor_val).strip()
+    if isinstance(val, (list, dict)) or isinstance(tor_val, (list, dict)):
+        v_str, t_str = str(val), str(tor_val)
+    else:
+        v_str, t_str = str(val).strip(), str(tor_val).strip()
+    
     if v_str == t_str: return 0.0
     if not is_present(tor_val) and is_present(val): return 1.0 * weight
     return 0.5 * weight
 
 def analyze_browser(browser_name, data, tor_data, conf):
-    score_crit = sum(get_penalty(data.get(f), tor_data.get(f), 10.0) for f in conf.get("critical", []))
-    score_high = sum(get_penalty(data.get(f), tor_data.get(f), 7.0) for f in conf.get("high", []))
-    score_med = sum(get_penalty(data.get(f), tor_data.get(f), 4.0) for f in conf.get("medium", []))
-    score_low = sum(get_penalty(data.get(f), tor_data.get(f), 2.0) for f in conf.get("low", []))
+    score_crit = sum(get_penalty(get_nested(data, f), get_nested(tor_data, f), 10.0) for f in conf.get("critical", []))
+    score_high = sum(get_penalty(get_nested(data, f), get_nested(tor_data, f), 7.0) for f in conf.get("high", []))
+    score_med = sum(get_penalty(get_nested(data, f), get_nested(tor_data, f), 4.0) for f in conf.get("medium", []))
+    score_low = sum(get_penalty(get_nested(data, f), get_nested(tor_data, f), 2.0) for f in conf.get("low", []))
 
-    if "webgl_parameters" in data:
-        w_diff = abs(extract_number(data.get("webgl_parameters")) - extract_number(tor_data.get("webgl_parameters")))
+    if get_nested(data, "webgl_parameters"):
+        w_diff = abs(extract_number(get_nested(data, "webgl_parameters")) - extract_number(get_nested(tor_data, "webgl_parameters")))
         score_crit += (w_diff * 0.5)
 
-    if "list_of_fonts_js" in data:
-        f_diff = abs(extract_number(data.get("list_of_fonts_js")) - extract_number(tor_data.get("list_of_fonts_js")))
+    if get_nested(data, "list_of_fonts_js"):
+        f_diff = abs(extract_number(get_nested(data, "list_of_fonts_js")) - extract_number(get_nested(tor_data, "list_of_fonts_js")))
         score_high += (f_diff * 0.3)
     
-    if "list_of_plugins" in data:
-        p_diff = abs(count_elements(data.get("list_of_plugins")) - count_elements(tor_data.get("list_of_plugins")))
+    if get_nested(data, "list_of_plugins"):
+        p_diff = abs(count_elements(get_nested(data, "list_of_plugins")) - count_elements(get_nested(tor_data, "list_of_plugins")))
         score_high += (p_diff * 1.0)
 
     total_index = (score_crit * 0.40) + (score_high * 0.30) + (score_med * 0.20) + (score_low * 0.10)
@@ -66,14 +79,14 @@ def analyze_browser(browser_name, data, tor_data, conf):
 def main(source_site=None):
     if source_site is None:
         if len(sys.argv) < 2:
-            print("Użycie: python analysis.py <nazwa_strony>")
+            print("Usage: python analysis.py <site_name>")
             return
         source_site = sys.argv[1]
 
     conf = get_config(source_site)
 
     if not conf:
-        print(f"Błąd: Brak konfiguracji dla strony '{source_site}'")
+        print(f"Error: Configuration for site '{source_site}' not found.")
         return
 
     base_path = pathlib.Path(__file__).parent.parent / "data" / source_site
@@ -88,7 +101,7 @@ def main(source_site=None):
 
     try:
         if not files["tor"].exists():
-            print(f"Błąd: Brak pliku wzorcowego Tor dla {source_site} w {files['tor']}")
+            print(f"Error: Tor baseline file for {source_site} not found at {files['tor']}")
             return
 
         tor_baseline = load_data(files["tor"])
@@ -105,12 +118,12 @@ def main(source_site=None):
         output_path = output_dir / f"results_{source_site}.csv"
         df.to_csv(output_path)
         
-        print(f"\n--- WYNIKI DLA: {source_site.upper()} ---")
+        print(f"\n--- ANALYSIS RESULTS: {source_site.upper()} ---")
         print(df.to_string())
-        print(f"\n[OK] Zapisano w: {output_path}")
+        print(f"\n[OK] Results saved to: {output_path}")
 
     except Exception as e:
-        print(f"[ERROR] Wystąpił błąd podczas analizy: {e}")
+        print(f"[ERROR] An exception occurred during analysis: {e}")
 
 if __name__ == "__main__":
     main()
