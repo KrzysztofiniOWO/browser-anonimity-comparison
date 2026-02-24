@@ -227,7 +227,7 @@ def main():
         if not data:
             log.warning("Firefox webdriver did not return data, falling back to requests")
             data = fetch_ipinfo()
-        save_data("firefox", data, ua)
+        save_data("Firefox", data, ua)
     except Exception as e:
         log.error(f"Unhandled error in Firefox ipinfo test: {e}")
 
@@ -237,7 +237,7 @@ def main():
         if not data:
             log.warning("Chrome webdriver did not return data, falling back to requests")
             data = fetch_ipinfo()
-        save_data("chrome", data, ua)
+        save_data("Chrome", data, ua)
     except Exception as e:
         log.error(f"Unhandled error in Chrome ipinfo test: {e}")
 
@@ -247,7 +247,7 @@ def main():
         if not data:
             log.warning("Edge webdriver did not return data, falling back to requests")
             data = fetch_ipinfo()
-        save_data("edge", data, ua)
+        save_data("Edge", data, ua)
     except Exception as e:
         log.error(f"Unhandled error in edge ipinfo test: {e}")
 
@@ -257,7 +257,7 @@ def main():
         if not data:
             log.warning("Brave webdriver did not return data, falling back to requests")
             data = fetch_ipinfo()
-        save_data("brave", data, ua)
+        save_data("Brave", data, ua)
     except Exception as e:
         log.error(f"Unhandled error in Brave ipinfo test: {e}")
 
@@ -273,11 +273,11 @@ def main():
         if not data:
             log.warning("Tor Browser fetch failed, falling back to requests via Tor proxy")
             data = fetch_ipinfo(proxies={"http": TOR_PROXY, "https": TOR_PROXY})
-        save_data("torbrowser", data, ua)
+        save_data("TorBrowser", data, ua)
     else:
         log.warning("Tor Browser folder not found; using requests via Tor proxy")
         data = fetch_ipinfo(proxies={"http": TOR_PROXY, "https": TOR_PROXY})
-        save_data("torbrowser", data, ua=None)
+        save_data("TorBrowser", data, ua=None)
 
     log.finish("Finished ipinfo test (browser-driven)")
 
