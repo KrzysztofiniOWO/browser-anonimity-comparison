@@ -197,9 +197,16 @@ def runSelectedBrowser(browser_name, getter_fn, wait=6, tbb_dir=None):
 def main():
     log.module("Starting fingerprint-scan module")
 
+    log.info("Firefox test started")
     runSelectedBrowser("Firefox", getHtmlFirefox)
+
+    log.info("Chrome test started")
     runSelectedBrowser("Chrome", getHtmlChrome)
+
+    log.info("Edge test started")
     runSelectedBrowser("Edge", getHtmlEdge)
+
+    log.info("Brave test started")
     runSelectedBrowser("Brave", getHtmlBrave)
 
     tbb_dir = helpers.determineTorBrowserDir()
