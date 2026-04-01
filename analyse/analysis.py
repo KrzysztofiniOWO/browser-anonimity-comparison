@@ -3,30 +3,48 @@ import pathlib
 import pandas as pd
 import re
 import sys
+import math
 
 try:
     from .analysis_helper import get_config
 except (ImportError, ValueError):
     from analysis_helper import get_config
 
-EMPTY = ("No value", "Not supported", "Unknown", "None", "unspecified", None, "")
+# REMOVED None from the tuple to avoid 'in <string>' errors
+EMPTY = (
+    "no value", "not supported", "unknown", "none", "unspecified", 
+    "blocked", "detection disabled", "could not detect", 
+    "detection blocked", "not detected", ""
+)
 
 def load_data(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)["data"]
 
 def is_present(v):
-    return v not in EMPTY and str(v).strip() != ""
+    if v is None: 
+        return False
+    s = str(v).strip().lower()
+    if s == "":
+        return False
+    for phrase in EMPTY:
+        # phrase is now always a string, so this won't crash
+        if phrase in s:
+            return False
+    return True
 
 def extract_number(text):
-    if not is_present(text): return 0
-    match = re.search(r'\d+', str(text))
+    if not is_present(text): 
+        return 0
+    s_text = str(text)
+    match = re.search(r'\d+', s_text)
     return int(match.group()) if match else 0
 
 def count_elements(text):
     if not is_present(text): return 0
     if isinstance(text, list): return len(text)
-    return len([line for line in str(text).split('\n') if line.strip()])
+    elements = [e for e in re.split(r'[,\n]', str(text)) if e.strip()]
+    return len(elements)
 
 def get_nested(data, key):
     for part in key.split('.'):
@@ -37,34 +55,76 @@ def get_nested(data, key):
     return data
 
 def get_penalty(val, tor_val, weight):
-    if isinstance(val, (list, dict)) or isinstance(tor_val, (list, dict)):
-        v_str, t_str = str(val), str(tor_val)
-    else:
-        v_str, t_str = str(val).strip(), str(tor_val).strip()
+    v_pres = is_present(val)
+    t_pres = is_present(tor_val)
     
-    if v_str == t_str: return 0.0
-    if not is_present(tor_val) and is_present(val): return 1.0 * weight
-    return 0.5 * weight
+    v_str = str(val).strip().lower() if val is not None else ""
+    t_str = str(tor_val).strip().lower() if tor_val is not None else ""
+
+    if v_str == t_str:
+        return 0.0
+
+    if not t_pres and v_pres:
+        return 1.2 * weight
+    
+    if t_pres and v_pres:
+        return 1.0 * weight
+        
+    if t_pres and not v_pres:
+        return 0.5 * weight
+        
+    return 0.2 * weight
+
+def get_header_penalty(val, tor_val, weight):
+    if not is_present(val) or not is_present(tor_val):
+        return get_penalty(val, tor_val, weight)
+    
+    v_keys = set(re.findall(r'^([\w-]+):', str(val), re.MULTILINE))
+    t_keys = set(re.findall(r'^([\w-]+):', str(tor_val), re.MULTILINE))
+    
+    extra_headers = v_keys - t_keys
+    penalty = len(extra_headers) * 0.5 * weight
+    
+    if v_keys == t_keys and str(val) != str(tor_val):
+        penalty += 0.5 * weight
+        
+    return min(penalty, weight * 1.5)
+
+def get_base_score(data, tor_data, fields, weight):
+    total = 0
+    for f in fields:
+        val = get_nested(data, f)
+        t_val = get_nested(tor_data, f)
+        
+        if any(x in f.lower() for x in ["header", "accept", "sec-"]):
+            total += get_header_penalty(val, t_val, weight)
+        else:
+            total += get_penalty(val, t_val, weight)
+    return total
+
+def get_list_log_penalty(data, tor_data, key_variants, weight, factor):
+    for k in key_variants:
+        v = get_nested(data, k)
+        t = get_nested(tor_data, k)
+        if v is not None and t is not None:
+            diff = abs(count_elements(v) - count_elements(t))
+            if diff > 0:
+                return math.log2(diff + 1) * factor * weight
+    return 0
 
 def analyze_browser(browser_name, data, tor_data, conf):
-    score_crit = sum(get_penalty(get_nested(data, f), get_nested(tor_data, f), 10.0) for f in conf.get("critical", []))
-    score_high = sum(get_penalty(get_nested(data, f), get_nested(tor_data, f), 7.0) for f in conf.get("high", []))
-    score_med = sum(get_penalty(get_nested(data, f), get_nested(tor_data, f), 4.0) for f in conf.get("medium", []))
-    score_low = sum(get_penalty(get_nested(data, f), get_nested(tor_data, f), 2.0) for f in conf.get("low", []))
+    score_crit = get_base_score(data, tor_data, conf.get("critical", []), 10.0)
+    score_high = get_base_score(data, tor_data, conf.get("high", []), 7.0)
+    score_med  = get_base_score(data, tor_data, conf.get("medium", []), 4.0)
+    score_low  = get_base_score(data, tor_data, conf.get("low", []), 2.0)
 
-    if get_nested(data, "webgl_parameters"):
-        w_diff = abs(extract_number(get_nested(data, "webgl_parameters")) - extract_number(get_nested(tor_data, "webgl_parameters")))
-        score_crit += (w_diff * 0.5)
+    score_crit += get_list_log_penalty(data, tor_data, ["webgl_parameters", "WebGL Challenge.parameters"], 10.0, 1.2)
+    score_high += get_list_log_penalty(data, tor_data, ["list_of_fonts_js", "fonts_list", "Fonts.Fonts"], 7.0, 1.0)
+    score_high += get_list_log_penalty(data, tor_data, ["list_of_plugins", "plugins_information.Name"], 7.0, 1.5)
 
-    if get_nested(data, "list_of_fonts_js"):
-        f_diff = abs(extract_number(get_nested(data, "list_of_fonts_js")) - extract_number(get_nested(tor_data, "list_of_fonts_js")))
-        score_high += (f_diff * 0.3)
-    
-    if get_nested(data, "list_of_plugins"):
-        p_diff = abs(count_elements(get_nested(data, "list_of_plugins")) - count_elements(get_nested(tor_data, "list_of_plugins")))
-        score_high += (p_diff * 1.0)
+    total_index = (score_crit * 0.50) + (score_high * 0.25) + (score_med * 0.15) + (score_low * 0.10)
 
-    total_index = (score_crit * 0.40) + (score_high * 0.30) + (score_med * 0.20) + (score_low * 0.10)
+    privacy_pct = round(max(0, 100 - (total_index * 2.2)), 2)
 
     return {
         "Browser": browser_name,
@@ -73,7 +133,7 @@ def analyze_browser(browser_name, data, tor_data, conf):
         "Score_Medium": round(score_med, 2),
         "Score_Low": round(score_low, 2),
         "Fingerprint_Intensity": round(total_index, 2),
-        "Privacy_Score_Pct": round(max(0, 100 - (total_index / 2)), 2)
+        "Privacy_Score_Pct": privacy_pct
     }
 
 def main(source_site=None):
@@ -84,13 +144,11 @@ def main(source_site=None):
         source_site = sys.argv[1]
 
     conf = get_config(source_site)
-
     if not conf:
         print(f"Error: Configuration for site '{source_site}' not found.")
         return
 
     base_path = pathlib.Path(__file__).parent.parent / "data" / source_site
-    
     files = {
         "chrome":  base_path / "chrome" / "Chrome.json",
         "firefox": base_path / "firefox" / "Firefox.json",
@@ -101,7 +159,7 @@ def main(source_site=None):
 
     try:
         if not files["tor"].exists():
-            print(f"Error: Tor baseline file for {source_site} not found at {files['tor']}")
+            print(f"Error: Tor baseline missing at {files['tor']}")
             return
 
         tor_baseline = load_data(files["tor"])
@@ -118,12 +176,12 @@ def main(source_site=None):
         output_path = output_dir / f"results_{source_site}.csv"
         df.to_csv(output_path)
         
-        print(f"\n--- ANALYSIS RESULTS: {source_site.upper()} ---")
+        print(f"\n--- ANALYSIS COMPLETED: {source_site.upper()} ---")
         print(df.to_string())
         print(f"\n[OK] Results saved to: {output_path}")
 
     except Exception as e:
-        print(f"[ERROR] An exception occurred during analysis: {e}")
+        print(f"[ERROR] Error during analysis: {e}")
 
 if __name__ == "__main__":
     main()
